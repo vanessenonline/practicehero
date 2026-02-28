@@ -12,13 +12,12 @@
     "Multi-language (Dutch/English)"
   ],
   "currentPhase": {
-    "number": 3,
-    "name": "Teacher UI",
+    "number": 5,
+    "name": "Parent Child Mode Switch",
     "status": "100% complete",
     "nextSteps": [
-      "Phase 4: Login page updates for student tab",
-      "Phase 5: Parent Child Mode switch feature",
-      "Phase 6-7: Code updates, i18n, testing"
+      "Phase 6: Code updates for nullable family_id (1 day)",
+      "Phase 7: Testing (1 day)"
     ]
   },
   "documentation": {

@@ -49,6 +49,7 @@
     "checkEmail": "Controleer je e-mail",
     "confirmationSent": "We hebben een bevestigingslink gestuurd naar:",
     "backToLogin": "Terug naar inloggen",
+    "backToParent": "Terug naar ouder",
     "passwordMismatch": "Wachtwoorden komen niet overeen",
     "passwordTooShort": "Wachtwoord moet minimaal 6 tekens zijn",
     "noChildrenYet": "Nog geen kinderen aangemeld. Een ouder moet eerst inloggen op dit apparaat.",
@@ -131,6 +132,7 @@
     "newUnlock": "Nieuwe prestatie ontgrendeld!"
   },
   "parent": {
+    "childMode": "Kindmodus",
     "dashboard": {
       "title": "Gezinsdashboard",
       "todayStatus": "Oefenen vandaag",

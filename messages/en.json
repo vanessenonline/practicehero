@@ -49,6 +49,7 @@
     "checkEmail": "Check your email",
     "confirmationSent": "We sent a confirmation link to:",
     "backToLogin": "Back to login",
+    "backToParent": "Back to parent",
     "passwordMismatch": "Passwords do not match",
     "passwordTooShort": "Password must be at least 6 characters",
     "noChildrenYet": "No children registered yet. A parent needs to log in on this device first.",
@@ -131,6 +132,7 @@
     "newUnlock": "New achievement unlocked!"
   },
   "parent": {
+    "childMode": "Child Mode",
     "dashboard": {
       "title": "Family Dashboard",
       "todayStatus": "Today's practice",

@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, MessageCircle, Settings, LogOut, Music } from "lucide-react";
+import { LayoutDashboard, Users, MessageCircle, Settings, LogOut, Music, Baby } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useSupabase } from "@/providers/SupabaseProvider";
@@ -30,6 +30,20 @@ export function ParentNav() {
   async function handleLogout() {
     await supabase.auth.signOut();
     router.push(`/${locale}/login`);
+    router.refresh();
+  }
+
+  async function handleChildMode() {
+    // Set flag to show child login tab
+    try {
+      localStorage.setItem("practicehero_child_mode", "true");
+    } catch {
+      // localStorage may not be available
+    }
+
+    // Sign out and redirect to login with child tab
+    await supabase.auth.signOut();
+    router.push(`/${locale}/login?tab=child`);
     router.refresh();
   }
 
@@ -72,6 +86,17 @@ export function ParentNav() {
               </Link>
             );
           })}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleChildMode}
+            className="text-muted-foreground hover:text-blue-600"
+            title="Kindmodus"
+          >
+            <Baby className="h-4 w-4" />
+            <span className="hidden sm:inline ml-1 text-xs">Kindmodus</span>
+          </Button>
 
           <Button
             variant="ghost"

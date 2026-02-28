@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 import { Music, Drum, Guitar, Piano, Lock, Loader2, User } from "lucide-react";
@@ -39,6 +39,7 @@ export default function LoginPage() {
   const router = useRouter();
   const locale = useLocale();
   const supabase = useSupabase();
+  const searchParams = useSearchParams();
 
   // Parent login state
   const [email, setEmail] = useState("");
@@ -54,7 +55,10 @@ export default function LoginPage() {
   const [childLoading, setChildLoading] = useState(false);
   const [familyId, setFamilyId] = useState<string | null>(null);
 
-  // Load remembered family children on mount
+  // Get default tab from URL query parameter, or "parent" if not specified
+  const [defaultTab, setDefaultTab] = useState("parent");
+
+  // Load remembered family children on mount and check for tab parameter
   useEffect(() => {
     try {
       const stored = localStorage.getItem("practicehero_family_id");
@@ -62,10 +66,24 @@ export default function LoginPage() {
         setFamilyId(stored);
         loadChildren(stored);
       }
+
+      // Check for ?tab query parameter
+      const tabParam = searchParams.get("tab");
+      if (tabParam === "child" || tabParam === "student") {
+        setDefaultTab(tabParam);
+        // Clear child mode flag if coming from parent's child mode switch
+        if (tabParam === "child") {
+          try {
+            localStorage.removeItem("practicehero_child_mode");
+          } catch {
+            // localStorage may not be available
+          }
+        }
+      }
     } catch {
       // localStorage may not be available
     }
-  }, []);
+  }, [searchParams]);
 
   async function loadChildren(fid: string) {
     const result = await getFamilyChildren(fid);
@@ -132,7 +150,7 @@ export default function LoginPage() {
         </h1>
       </div>
 
-      <Tabs defaultValue="parent" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="parent">{t("auth.parentLogin")}</TabsTrigger>
           <TabsTrigger value="child">{t("auth.childLogin")}</TabsTrigger>

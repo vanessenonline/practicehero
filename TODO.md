@@ -192,15 +192,15 @@
 
 ---
 
-## Phase 5: Parent Child Mode Switch (0.5 days) [NOT STARTED]
+## Phase 5: Parent Child Mode Switch (0.5 days) [COMPLETE ✓]
 
 ### ParentNav.tsx
-- [ ] Add import: `{ Baby } from "lucide-react"`
-- [ ] Add `handleChildMode()` function
-  - [ ] Set localStorage.practicehero_child_mode = 'true'
-  - [ ] Call supabase.auth.signOut()
-  - [ ] Navigate to `/${locale}/login?tab=child`
-- [ ] Add Button before LogOut:
+- [x] Add import: `{ Baby } from "lucide-react"`
+- [x] Add `handleChildMode()` function
+  - [x] Set localStorage.practicehero_child_mode = 'true'
+  - [x] Call supabase.auth.signOut()
+  - [x] Navigate to `/${locale}/login?tab=child`
+- [x] Add Button before LogOut:
   ```
   <Button variant="ghost" size="sm" onClick={handleChildMode}>
     <Baby className="h-4 w-4" />
@@ -209,30 +209,32 @@
   ```
 
 ### ChildNav.tsx
-- [ ] Add imports: `useEffect`, `useState`, `ArrowLeft`
-- [ ] Add state: `isChildMode`
-- [ ] Add useEffect to check localStorage
-- [ ] Add `handleBackToParent()` function
-  - [ ] Remove localStorage flag
-  - [ ] signOut
-  - [ ] Navigate to login
-- [ ] Add floating button (if isChildMode):
+- [x] Add imports: `useEffect`, `useState`, `ArrowLeft`
+- [x] Add state: `isChildMode`
+- [x] Add useEffect to check localStorage
+- [x] Add `handleBackToParent()` function
+  - [x] Remove localStorage flag
+  - [x] signOut
+  - [x] Navigate to login
+- [x] Add floating button (if isChildMode):
   ```
   {isChildMode && (
-    <div className="fixed bottom-20 right-4 z-50">
-      <button onClick={handleBackToParent} className="...">
-        <ArrowLeft className="h-3 w-3" />
-        {t("auth.backToParent")}
-      </button>
-    </div>
+    <Button onClick={handleBackToParent} className="...">
+      <ArrowLeft className="h-4 w-4" />
+      <span className="hidden sm:inline">Terug naar ouder</span>
+    </Button>
   )}
   ```
 
 ### Login Page
-- [ ] Add `useSearchParams()` hook
-- [ ] Read `tab` query parameter
-- [ ] Set `defaultTab` based on parameter
-- [ ] Update Tabs component: `defaultValue={defaultTab}`
+- [x] Add `useSearchParams()` hook
+- [x] Read `tab` query parameter
+- [x] Set `defaultTab` based on parameter
+- [x] Update Tabs component: `defaultValue={defaultTab}`
+
+### i18n Keys
+- [x] Add "parent.childMode": "Kindmodus" (NL) / "Child Mode" (EN)
+- [x] Add "auth.backToParent": "Terug naar ouder" (NL) / "Back to parent" (EN)
 
 ---
 
