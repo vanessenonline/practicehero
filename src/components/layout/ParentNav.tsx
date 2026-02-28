@@ -17,7 +17,7 @@ const navItems = [
 
 /**
  * Top/side navigation for the parent dashboard.
- * Clean, professional design.
+ * Clean, professional design with child mode switch.
  */
 export function ParentNav() {
   const t = useTranslations();
