@@ -2,17 +2,16 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 
-interface PageProps {
-  params: {
-    locale: string;
-  };
-}
-
 /**
  * Admin Dashboard Page
  * Server Component that verifies admin access before rendering the client component
  */
-export default async function AdminPage({ params }: PageProps) {
+export default async function AdminPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const supabase = await createClient();
 
   // Get current user
@@ -20,7 +19,7 @@ export default async function AdminPage({ params }: PageProps) {
 
   // Redirect to login if not authenticated
   if (!user) {
-    redirect(`/${params.locale}/login`);
+    redirect(`/${locale}/login`);
   }
 
   // Verify admin status
@@ -32,7 +31,7 @@ export default async function AdminPage({ params }: PageProps) {
 
   // Redirect if not admin
   if (error || !profile?.is_admin) {
-    redirect(`/${params.locale}/dashboard`);
+    redirect(`/${locale}/dashboard`);
   }
 
   return (
