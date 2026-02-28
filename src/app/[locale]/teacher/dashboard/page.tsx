@@ -23,7 +23,7 @@ export default async function TeacherDashboardPage({
   const students = await getStudents();
 
   // Fetch recent practice sessions for this studio
-  let recentSessions = [];
+  let recentSessions: any[] = [];
   if (studio) {
     const supabase = await createClient();
     const today = new Date().toISOString().split("T")[0];

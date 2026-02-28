@@ -769,7 +769,7 @@ export async function getTeacherDashboard(): Promise<{
   const today = new Date().toISOString().split("T")[0];
   const { data: practicedToday } = await supabase
     .from("practice_sessions")
-    .select("child_id", { count: "exact", distinct: true })
+    .select("child_id", { count: "exact" })
     .eq("studio_id", studio.id)
     .gte("started_at", `${today}T00:00:00`)
     .lte("started_at", `${today}T23:59:59`);

@@ -22,7 +22,7 @@ export default async function StudentDetailPage({
   const { student, error } = await getStudentDetail(studentId);
 
   // Fetch recent practice sessions
-  let recentSessions = [];
+  let recentSessions: any[] = [];
   if (student) {
     const supabase = await createClient();
     const { data: sessions } = await supabase

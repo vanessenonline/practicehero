@@ -280,7 +280,6 @@ export default function RegisterPage() {
               {t("auth.login")}
             </Link>
           </div>
-            </form>
             </CardContent>
           </TabsContent>
 
