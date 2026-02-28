@@ -67,14 +67,9 @@ export function ParentNav() {
   }
 
   return (
-    <>
-      {/* DEPLOYMENT TEST BANNER - Remove after verification */}
-      <div className="bg-green-500 text-white text-center text-sm py-1">
-        ✅ Deployment verified - Latest ParentNav code loaded
-      </div>
-      <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          {/* Logo */}
+    <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+        {/* Logo */}
         <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-purple-600 text-white">
             <Music className="h-4 w-4" />
@@ -133,6 +128,5 @@ export function ParentNav() {
         </nav>
       </div>
     </header>
-    </>
   );
 }
