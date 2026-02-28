@@ -238,31 +238,31 @@
 
 ---
 
-## Phase 6: Existing Code Updates (1 day) [NOT STARTED]
+## Phase 6: Existing Code Updates (1 day) [COMPLETE ✓]
 
 ### practice.ts
-- [ ] Update `startPracticeSession()`
-  - [ ] After getting profile, query teacher_students
-  - [ ] Pass studio_id to practice_sessions insert if exists
-  - [ ] Keep family_id logic (may be null)
+- [x] Update `startPracticeSession()`
+  - [x] Query teacher_students table for student
+  - [x] Pass studio_id to practice_sessions insert if exists
+  - [x] family_id logic already handles null correctly
 
-- [ ] Update `completePracticeSession()`
-  - [ ] Ensure family_id null-safety in points calculation
-  - [ ] If no family_id, still award points (use NULL for family context)
+- [x] Update `completePracticeSession()`
+  - [x] Already null-safe - passes family_id (null or value) to inserts
+  - [x] Points/super_credits/streaks all handle NULL family_id correctly
 
 ### child.ts
-- [ ] Review `getChildDashboard()`
-  - [ ] All queries already use child_id, should be fine
-  - [ ] Check if any joins explicitly filter on family_id (should be safe with NULL)
+- [x] Review `getChildDashboard()`
+  - [x] All queries use child_id - independent of family_id
+  - [x] No family_id filtering needed - already safe
 
 ### shop.ts
-- [ ] Review `purchaseItem()`, `useStreakRestorer()`, `usePauseDay()`
-  - [ ] Check family_id usage, ensure null-safe
+- [x] Review `purchaseItem()`, `useStreakRestorer()`, `usePauseDay()`
+  - [x] All pass family_id to inserts - handles null correctly
 
 ### messages.ts
-- [ ] Review message handling
-  - [ ] Teacher-only students (no parent) shouldn't try to fetch parent messages
-  - [ ] Optional: allow teacher-to-student messaging (v2 feature)
+- [x] Update message handling
+  - [x] Add null-check: teacher students (family_id=null) cannot use family messaging
+  - [x] Returns error "Ontvanger niet gevonden" for null family attempts
 
 ### i18n Keys
 - [ ] Update `messages/nl.json`:
@@ -352,12 +352,21 @@ WHERE ps.child_id IN (
 - [x] Architecture design & decisions
 - [x] Implementation plan documented
 - [x] TODO created
+- [x] Phase 1: Database (migrations, RLS, RPC functions)
+- [x] Phase 2: Authentication (teacher/student registration, login flows)
+- [x] Phase 3: Teacher UI (dashboard, students, courses, settings)
+- [x] Phase 4: Login Updates (3-tab system, StudentLoginForm)
+- [x] Phase 5: Parent Child Mode Switch (Kindmodus button, localStorage)
+- [x] Phase 6: Nullable family_id Support (startPracticeSession, messages)
+
+### In Progress
+- [ ] Phase 7: Comprehensive Testing
 
 ### Not Started
-- [ ] Phase 1-7 tasks (all pending)
+- [ ] Phases beyond 7
 
 ### Current Status
-Ready to begin Phase 1 (Database migration)
+Ready to begin Phase 7 (Testing)
 
 ---
 
