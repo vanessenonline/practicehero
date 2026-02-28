@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSupabase } from "@/providers/SupabaseProvider";
 import { loginChild, getFamilyChildren } from "@/lib/actions/auth";
+import { StudentLoginForm } from "@/components/auth/StudentLoginForm";
 
 /** Instrument icon map for child avatars */
 const instrumentIcons: Record<string, React.ReactNode> = {
@@ -132,9 +133,10 @@ export default function LoginPage() {
       </div>
 
       <Tabs defaultValue="parent" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="parent">{t("auth.parentLogin")}</TabsTrigger>
           <TabsTrigger value="child">{t("auth.childLogin")}</TabsTrigger>
+          <TabsTrigger value="student">Leerling</TabsTrigger>
         </TabsList>
 
         {/* ── Parent Login Tab ───────────────────────────────────────── */}
@@ -295,6 +297,21 @@ export default function LoginPage() {
                   )}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Student Login Tab ──────────────────────────────────────── */}
+        <TabsContent value="student">
+          <Card>
+            <CardHeader>
+              <CardTitle>Leerling inloggen</CardTitle>
+              <CardDescription>
+                Voer je leraar- en leerlingcode in
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StudentLoginForm />
             </CardContent>
           </Card>
         </TabsContent>

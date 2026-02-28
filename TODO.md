@@ -165,28 +165,30 @@
 
 ---
 
-## Phase 4: Login Updates (0.5 days) [NOT STARTED]
+## Phase 4: Login Updates (0.5 days) [COMPLETE ✓]
 
 ### Login Page
-- [ ] Update `/src/app/[locale]/(auth)/login/page.tsx`
-  - [ ] Change TabsList from grid-cols-2 to grid-cols-3
-  - [ ] Add student login TabsContent
-  - [ ] Import/create StudentLoginForm component
+- [x] Update `/src/app/[locale]/(auth)/login/page.tsx`
+  - [x] Change TabsList from grid-cols-2 to grid-cols-3
+  - [x] Add student login TabsContent with StudentLoginForm
+  - [x] Import StudentLoginForm component
 
 ### StudentLoginForm Component
-- [ ] Create `/src/components/auth/StudentLoginForm.tsx`
-  - [ ] Teacher code input (T-XXXX)
-  - [ ] Student code input (S-XXXX)
-  - [ ] PIN input (4 digits, masked)
-  - [ ] Call loginStudent()
-  - [ ] Handle errors
-  - [ ] Loading state
+- [x] Create `/src/components/auth/StudentLoginForm.tsx`
+  - [x] Teacher code input (T-XXXX format with validation)
+  - [x] Student code input (S-XXXX format with validation)
+  - [x] PIN input (4 digits, masked, numeric only)
+  - [x] Call loginStudent() with form validation
+  - [x] Handle errors and display messages
+  - [x] Loading state with spinner
 
 ### Register Page
-- [ ] Update `/src/app/[locale]/(auth)/register/page.tsx`
-  - [ ] Add tabs: Parent register | Teacher register
-  - [ ] Teacher form: email, password, studio name
-  - [ ] Call registerTeacher() + createStudio()
+- [x] Update `/src/app/[locale]/(auth)/register/page.tsx`
+  - [x] Add tabs: Parent register | Teacher register
+  - [x] Teacher form: studio name, email, password, confirm password
+  - [x] Call registerTeacher() + createStudio() on submit
+  - [x] Email confirmation handling for both types
+  - [x] Proper error handling and validation
 
 ---
 
