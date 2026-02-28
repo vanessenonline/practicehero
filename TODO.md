@@ -6,35 +6,35 @@
 
 ---
 
-## Phase 1: Database (1 day) [NOT STARTED]
+## Phase 1: Database (1 day) [IN PROGRESS ✓]
 
 ### Migration 009: Teacher Module
-- [ ] Create file `/supabase/migrations/009_teacher_module.sql`
-- [ ] Add user_role ENUM value 'teacher'
-- [ ] Create studios table
-- [ ] Create courses table
-- [ ] Create course_lessons table
-- [ ] Create teacher_students table
-- [ ] Alter profiles.family_id to nullable
-- [ ] Alter practice_sessions (add studio_id, make family_id nullable)
-- [ ] Alter streaks, points, super_credits (make family_id nullable)
-- [ ] Create RLS policies (studios, courses, course_lessons, teacher_students)
-- [ ] Extend RLS policies on existing tables (practice_sessions, streaks, points, super_credits)
-- [ ] Create RPC function: lookup_student_by_codes()
-- [ ] Create RPC function: generate_teacher_code()
-- [ ] Create RPC function: generate_student_code()
+- [x] Create file `/supabase/migrations/009_teacher_module.sql`
+- [x] Add user_role ENUM value 'teacher'
+- [x] Create studios table
+- [x] Create courses table
+- [x] Create course_lessons table
+- [x] Create teacher_students table
+- [x] Alter profiles.family_id to nullable
+- [x] Alter practice_sessions (add studio_id, make family_id nullable)
+- [x] Alter streaks, points, super_credits (make family_id nullable)
+- [x] Create RLS policies (studios, courses, course_lessons, teacher_students)
+- [x] Extend RLS policies on existing tables (practice_sessions, streaks, points, super_credits)
+- [x] Create RPC function: lookup_student_by_codes()
+- [x] Create RPC function: generate_teacher_code()
+- [x] Create RPC function: generate_student_code()
 - [ ] Test migration locally with `supabase migration up`
 
 ### TypeScript Types
-- [ ] Update `src/types/database.ts`
-  - [ ] Change UserRole to include 'teacher'
-  - [ ] Make Profile.family_id nullable
-  - [ ] Make PracticeSession.family_id nullable
-  - [ ] Add studio_id to PracticeSession
-  - [ ] Add Studio interface
-  - [ ] Add Course interface
-  - [ ] Add CourseLesson interface
-  - [ ] Add TeacherStudent interface
+- [x] Update `src/types/database.ts`
+  - [x] Change UserRole to include 'teacher'
+  - [x] Make Profile.family_id nullable
+  - [x] Make PracticeSession.family_id nullable
+  - [x] Add studio_id to PracticeSession
+  - [x] Add Studio interface
+  - [x] Add Course interface
+  - [x] Add CourseLesson interface
+  - [x] Add TeacherStudent interface
 
 ### handle_new_user Trigger
 - [ ] Check if trigger needs updating for teacher role
