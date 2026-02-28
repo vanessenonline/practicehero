@@ -1,0 +1,223 @@
+{
+  "common": {
+    "appName": "PracticeHero",
+    "start": "Start",
+    "stop": "Stop",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "minutes": "minutes",
+    "days": "days",
+    "points": "points"
+  },
+  "nav": {
+    "home": "Home",
+    "practice": "Practice",
+    "shop": "Shop",
+    "achievements": "Achievements",
+    "messages": "Messages",
+    "dashboard": "Dashboard",
+    "children": "Children",
+    "settings": "Settings"
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Create account",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "familyName": "Family name",
+    "parentLogin": "Parent login",
+    "childLogin": "Who's practicing?",
+    "enterPin": "Enter your PIN",
+    "wrongPin": "Wrong PIN, try again",
+    "noAccount": "No account yet?",
+    "hasAccount": "Already have an account?",
+    "registerSuccess": "Account created! Let's add your children.",
+    "welcomeBack": "Welcome back!",
+    "createFamily": "Create a family account to get started.",
+    "checkEmail": "Check your email",
+    "confirmationSent": "We sent a confirmation link to:",
+    "backToLogin": "Back to login",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "noChildrenYet": "No children registered yet. A parent needs to log in on this device first.",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordDesc": "Enter your email address and we'll send you a link to reset your password.",
+    "sendResetLink": "Send reset link",
+    "resetEmailSent": "We've sent a link to reset your password. Check your inbox (and spam folder).",
+    "resetPassword": "Reset password",
+    "resetPasswordDesc": "Choose a new password for your account.",
+    "newPassword": "New password",
+    "updatePassword": "Save password",
+    "passwordUpdated": "Password updated!",
+    "redirecting": "Redirecting to dashboard..."
+  },
+  "practice": {
+    "title": "Time to Practice!",
+    "selectInstrument": "What are you playing today?",
+    "currentLesson": "This week's lesson",
+    "newChallenge": "New challenge",
+    "watchVideo": "Watch video",
+    "listenTrack": "Listen along",
+    "repeatChallenge": "Repeat",
+    "bonusAvailable": "bonus points",
+    "timer": {
+      "remaining": "{minutes}:{seconds} left",
+      "bonus": "+{minutes}:{seconds} bonus time!"
+    },
+    "audio": {
+      "detected": "{instrument} detected!",
+      "waiting": "Waiting for sound...",
+      "silence": "It's quiet... are you practicing?",
+      "permissionNeeded": "Microphone access needed to verify practice"
+    },
+    "session": {
+      "complete": "Great job, {name}!",
+      "bonusTime": "Bonus time: {minutes} min",
+      "pointsEarned": "+{points} points earned!",
+      "keepGoing": "Keep going for bonus points!"
+    }
+  },
+  "streak": {
+    "current": "{count} day streak!",
+    "newRecord": "New record!",
+    "recovery": "Recovery mode: {days} days to go",
+    "broken": "Start a new streak today!",
+    "milestone": "10-day milestone! You earned a Super Credit!",
+    "weekendBonus": "Weekend practice! Your streak grows!"
+  },
+  "points": {
+    "balance": "{count} points",
+    "superCredits": "{count} Super Credits",
+    "convertAvailable": "You can convert to a Super Credit!",
+    "converted": "Converted to 1 Super Credit!"
+  },
+  "shop": {
+    "title": "Hero Shop",
+    "balance": "You have {count} Super Credits",
+    "buy": "Buy",
+    "confirmPurchase": "Buy {item} for {cost} credits?",
+    "purchased": "Purchased!",
+    "notEnough": "Not enough credits",
+    "inventory": "My Items",
+    "store": "Store",
+    "noItems": "No items yet. Buy something from the store!",
+    "use": "Use",
+    "confirmUse": "Use {item}?",
+    "used": "Used!",
+    "streakNotBroken": "Your streak is not broken",
+    "items": {
+      "streakRestorer": "Streak Restorer",
+      "streakRestorerDesc": "Restore a broken streak",
+      "pauseDay": "Pause Day",
+      "pauseDayDesc": "Skip one weekday without breaking your streak"
+    }
+  },
+  "achievements": {
+    "title": "Achievements",
+    "unlocked": "Unlocked!",
+    "locked": "Keep practicing to unlock",
+    "newUnlock": "New achievement unlocked!"
+  },
+  "parent": {
+    "dashboard": {
+      "title": "Family Dashboard",
+      "todayStatus": "Today's practice",
+      "practiced": "Practiced",
+      "notYet": "Not yet",
+      "weeklyProgress": "Weekly progress",
+      "sendMessage": "Send message"
+    },
+    "children": {
+      "add": "Add child",
+      "name": "Child's name",
+      "pin": "Set a 4-digit PIN",
+      "pinHelp": "Your child will use this PIN to log in",
+      "selectInstruments": "What instruments do they play?",
+      "added": "Child added!",
+      "schedule": "Practice schedule",
+      "content": "Lesson content"
+    },
+    "content": {
+      "currentLesson": "This week's lesson",
+      "lessonTitle": "Lesson title",
+      "lessonDescription": "Description or notes",
+      "motivator": "Motivator (new challenge)",
+      "motivatorTitle": "Challenge title",
+      "saved": "Content saved!",
+      "videoUrl": "YouTube video",
+      "videoUrlPlaceholder": "https://youtube.com/watch?v=...",
+      "searchYouTube": "Search YouTube",
+      "audioUrl": "Spotify track",
+      "audioUrlPlaceholder": "https://open.spotify.com/track/...",
+      "weekSchedule": "Week schedule",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "history": "Past lessons",
+      "noHistory": "No past lessons yet.",
+      "reuseAsChallenge": "Use as challenge"
+    },
+    "messages": {
+      "title": "Messages",
+      "sendTo": "Send to {name}",
+      "placeholder": "Write a motivational message...",
+      "sent": "Message sent!"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "displayName": "Display name",
+    "language": "Language",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "practice": "Practice",
+    "dailyGoal": "Daily goal (minutes)",
+    "practiceDays": "Practice days",
+    "notifications": "Notifications",
+    "notificationsEnabled": "Enable notifications",
+    "streakReminder": "Streak reminder",
+    "achievementAlerts": "Achievement alerts",
+    "account": "Account",
+    "email": "Email",
+    "saved": "Settings saved!",
+    "childSettings": "Child settings",
+    "canSendMessages": "Can send messages",
+    "canSendMessagesHelp": "Allow this child to send messages to parents"
+  },
+  "days": {
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
+  },
+  "messages": {
+    "title": "Messages",
+    "noMessages": "No messages yet",
+    "placeholder": "Write a message...",
+    "send": "Send",
+    "sendingDisabled": "Sending messages is not enabled. Ask your parent!",
+    "sent": "Message sent!"
+  },
+  "instruments": {
+    "piano": "Piano",
+    "drums": "Drums",
+    "guitar": "Guitar"
+  },
+  "motivators": {
+    "piano": "Learn a new chord",
+    "drums": "Try a new fill",
+    "guitar": "Learn a new chord"
+  }
+}

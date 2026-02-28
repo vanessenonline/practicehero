@@ -1,0 +1,223 @@
+{
+  "common": {
+    "appName": "PracticeHero",
+    "start": "Start",
+    "stop": "Stop",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "confirm": "Bevestigen",
+    "back": "Terug",
+    "loading": "Laden...",
+    "error": "Er ging iets mis",
+    "minutes": "minuten",
+    "days": "dagen",
+    "points": "punten"
+  },
+  "nav": {
+    "home": "Home",
+    "practice": "Oefenen",
+    "shop": "Winkel",
+    "achievements": "Prestaties",
+    "messages": "Berichten",
+    "dashboard": "Dashboard",
+    "children": "Kinderen",
+    "settings": "Instellingen"
+  },
+  "auth": {
+    "login": "Inloggen",
+    "register": "Account aanmaken",
+    "logout": "Uitloggen",
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "confirmPassword": "Bevestig wachtwoord",
+    "familyName": "Familienaam",
+    "parentLogin": "Ouder inloggen",
+    "childLogin": "Wie gaat oefenen?",
+    "enterPin": "Voer je PIN in",
+    "wrongPin": "Verkeerde PIN, probeer opnieuw",
+    "noAccount": "Nog geen account?",
+    "hasAccount": "Heb je al een account?",
+    "registerSuccess": "Account aangemaakt! Laten we je kinderen toevoegen.",
+    "welcomeBack": "Welkom terug!",
+    "createFamily": "Maak een gezinsaccount aan om te starten.",
+    "checkEmail": "Controleer je e-mail",
+    "confirmationSent": "We hebben een bevestigingslink gestuurd naar:",
+    "backToLogin": "Terug naar inloggen",
+    "passwordMismatch": "Wachtwoorden komen niet overeen",
+    "passwordTooShort": "Wachtwoord moet minimaal 6 tekens zijn",
+    "noChildrenYet": "Nog geen kinderen aangemeld. Een ouder moet eerst inloggen op dit apparaat.",
+    "forgotPassword": "Wachtwoord vergeten?",
+    "forgotPasswordDesc": "Voer je e-mailadres in en we sturen je een link om je wachtwoord te resetten.",
+    "sendResetLink": "Resetlink versturen",
+    "resetEmailSent": "We hebben een link gestuurd om je wachtwoord te resetten. Check je inbox (en spam-map).",
+    "resetPassword": "Wachtwoord resetten",
+    "resetPasswordDesc": "Kies een nieuw wachtwoord voor je account.",
+    "newPassword": "Nieuw wachtwoord",
+    "updatePassword": "Wachtwoord opslaan",
+    "passwordUpdated": "Wachtwoord bijgewerkt!",
+    "redirecting": "Je wordt doorgestuurd naar het dashboard..."
+  },
+  "practice": {
+    "title": "Tijd om te oefenen!",
+    "selectInstrument": "Wat ga je vandaag spelen?",
+    "currentLesson": "Les van deze week",
+    "newChallenge": "Nieuwe uitdaging",
+    "watchVideo": "Bekijk video",
+    "listenTrack": "Luister mee",
+    "repeatChallenge": "Herhaling",
+    "bonusAvailable": "bonuspunten",
+    "timer": {
+      "remaining": "Nog {minutes}:{seconds}",
+      "bonus": "+{minutes}:{seconds} bonustijd!"
+    },
+    "audio": {
+      "detected": "{instrument} gedetecteerd!",
+      "waiting": "Wachten op geluid...",
+      "silence": "Het is stil... ben je aan het oefenen?",
+      "permissionNeeded": "Microfoon toegang nodig om oefenen te verifiëren"
+    },
+    "session": {
+      "complete": "Goed gedaan, {name}!",
+      "bonusTime": "Bonustijd: {minutes} min",
+      "pointsEarned": "+{points} punten verdiend!",
+      "keepGoing": "Ga door voor bonuspunten!"
+    }
+  },
+  "streak": {
+    "current": "{count} dagen streak!",
+    "newRecord": "Nieuw record!",
+    "recovery": "Herstelmodus: nog {days} dagen",
+    "broken": "Begin vandaag een nieuwe streak!",
+    "milestone": "10-dagen mijlpaal! Je hebt een Super Credit verdiend!",
+    "weekendBonus": "Weekend oefenen! Je streak groeit!"
+  },
+  "points": {
+    "balance": "{count} punten",
+    "superCredits": "{count} Super Credits",
+    "convertAvailable": "Je kunt omwisselen voor een Super Credit!",
+    "converted": "Omgewisseld naar 1 Super Credit!"
+  },
+  "shop": {
+    "title": "Heldenwinkel",
+    "balance": "Je hebt {count} Super Credits",
+    "buy": "Kopen",
+    "confirmPurchase": "{item} kopen voor {cost} credits?",
+    "purchased": "Gekocht!",
+    "notEnough": "Niet genoeg credits",
+    "inventory": "Mijn Items",
+    "store": "Winkel",
+    "noItems": "Nog geen items. Koop iets in de winkel!",
+    "use": "Gebruiken",
+    "confirmUse": "{item} gebruiken?",
+    "used": "Gebruikt!",
+    "streakNotBroken": "Je streak is niet verbroken",
+    "items": {
+      "streakRestorer": "Streak Hersteller",
+      "streakRestorerDesc": "Herstel een verbroken streak",
+      "pauseDay": "Pauzedag",
+      "pauseDayDesc": "Sla een werkdag over zonder je streak te verbreken"
+    }
+  },
+  "achievements": {
+    "title": "Prestaties",
+    "unlocked": "Ontgrendeld!",
+    "locked": "Blijf oefenen om te ontgrendelen",
+    "newUnlock": "Nieuwe prestatie ontgrendeld!"
+  },
+  "parent": {
+    "dashboard": {
+      "title": "Gezinsdashboard",
+      "todayStatus": "Oefenen vandaag",
+      "practiced": "Geoefend",
+      "notYet": "Nog niet",
+      "weeklyProgress": "Weekoverzicht",
+      "sendMessage": "Stuur bericht"
+    },
+    "children": {
+      "add": "Kind toevoegen",
+      "name": "Naam van het kind",
+      "pin": "Stel een 4-cijferige PIN in",
+      "pinHelp": "Je kind gebruikt deze PIN om in te loggen",
+      "selectInstruments": "Welke instrumenten spelen ze?",
+      "added": "Kind toegevoegd!",
+      "schedule": "Oefenschema",
+      "content": "Lesinhoud"
+    },
+    "content": {
+      "currentLesson": "Les van deze week",
+      "lessonTitle": "Lestitel",
+      "lessonDescription": "Beschrijving of notities",
+      "motivator": "Motivator (nieuwe uitdaging)",
+      "motivatorTitle": "Uitdaging titel",
+      "saved": "Inhoud opgeslagen!",
+      "videoUrl": "YouTube video",
+      "videoUrlPlaceholder": "https://youtube.com/watch?v=...",
+      "searchYouTube": "Zoek op YouTube",
+      "audioUrl": "Spotify track",
+      "audioUrlPlaceholder": "https://open.spotify.com/track/...",
+      "weekSchedule": "Weekplanning",
+      "startDate": "Startdatum",
+      "endDate": "Einddatum",
+      "history": "Eerdere lessen",
+      "noHistory": "Nog geen eerdere lessen.",
+      "reuseAsChallenge": "Gebruik als uitdaging"
+    },
+    "messages": {
+      "title": "Berichten",
+      "sendTo": "Stuur naar {name}",
+      "placeholder": "Schrijf een motiverend bericht...",
+      "sent": "Bericht verstuurd!"
+    }
+  },
+  "settings": {
+    "title": "Instellingen",
+    "profile": "Profiel",
+    "displayName": "Weergavenaam",
+    "language": "Taal",
+    "appearance": "Weergave",
+    "theme": "Thema",
+    "themeLight": "Licht",
+    "themeDark": "Donker",
+    "themeSystem": "Systeem",
+    "practice": "Oefenen",
+    "dailyGoal": "Dagelijks doel (minuten)",
+    "practiceDays": "Oefendagen",
+    "notifications": "Meldingen",
+    "notificationsEnabled": "Meldingen inschakelen",
+    "streakReminder": "Streak herinnering",
+    "achievementAlerts": "Prestatie meldingen",
+    "account": "Account",
+    "email": "E-mail",
+    "saved": "Instellingen opgeslagen!",
+    "childSettings": "Kind instellingen",
+    "canSendMessages": "Kan berichten sturen",
+    "canSendMessagesHelp": "Dit kind mag berichten sturen naar ouders"
+  },
+  "days": {
+    "mon": "Ma",
+    "tue": "Di",
+    "wed": "Wo",
+    "thu": "Do",
+    "fri": "Vr",
+    "sat": "Za",
+    "sun": "Zo"
+  },
+  "messages": {
+    "title": "Berichten",
+    "noMessages": "Nog geen berichten",
+    "placeholder": "Schrijf een bericht...",
+    "send": "Verstuur",
+    "sendingDisabled": "Berichten versturen is niet ingeschakeld. Vraag het aan je ouder!",
+    "sent": "Bericht verstuurd!"
+  },
+  "instruments": {
+    "piano": "Piano",
+    "drums": "Drums",
+    "guitar": "Gitaar"
+  },
+  "motivators": {
+    "piano": "Leer een nieuw akkoord",
+    "drums": "Probeer een nieuwe fill",
+    "guitar": "Leer een nieuw akkoord"
+  }
+}
