@@ -21,7 +21,13 @@
     "messages": "Berichten",
     "dashboard": "Dashboard",
     "children": "Kinderen",
-    "settings": "Instellingen"
+    "settings": "Instellingen",
+    "teacher": {
+      "dashboard": "Dashboard",
+      "students": "Leerlingen",
+      "courses": "Gelijkreeksen",
+      "settings": "Instellingen"
+    }
   },
   "auth": {
     "login": "Inloggen",
@@ -167,6 +173,29 @@
       "sendTo": "Stuur naar {name}",
       "placeholder": "Schrijf een motiverend bericht...",
       "sent": "Bericht verstuurd!"
+    }
+  },
+  "teacher": {
+    "studio": {
+      "code": "Leeraarcode",
+      "shareCode": "Deel deze code met je leerlingen"
+    },
+    "dashboard": {
+      "studentCount": "Aantal leerlingen",
+      "practicedToday": "Vandaag geoefend",
+      "recentSessions": "Recente sessies",
+      "noStudents": "Nog geen leerlingen",
+      "noStudentsHint": "Voeg je eerste leerling toe om te beginnen"
+    },
+    "students": {
+      "add": "Leerling toevoegen",
+      "empty": "Nog geen leerlingen",
+      "emptyHint": "Voeg leerlingen toe om ze te beheren"
+    },
+    "courses": {
+      "add": "Gelijkreeks aanmaken",
+      "empty": "Nog geen gelijkreeksen",
+      "emptyHint": "Maak je eerste gelijkreeks aan"
     }
   },
   "settings": {

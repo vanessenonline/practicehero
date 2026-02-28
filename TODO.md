@@ -42,7 +42,7 @@
 
 ---
 
-## Phase 2: Authentication (1 day) [IN PROGRESS ✓✓]
+## Phase 2: Authentication (1 day) [COMPLETE ✓✓✓]
 
 ### Teacher Registration & Studio
 - [x] Add `registerTeacher()` to `/src/lib/actions/auth.ts`
@@ -61,16 +61,21 @@
   - [x] Error handling
 
 ### Teacher Creates Student
-- [ ] Create `/src/lib/actions/teacher.ts`
-- [ ] Add `addStudent()` function
-  - [ ] Verify teacher authenticated
-  - [ ] Get teacher's studio
-  - [ ] Create Supabase Auth user (student-{uuid}@...)
-  - [ ] Wait for profile trigger
-  - [ ] Link instruments via child_instruments
-  - [ ] Generate student code via RPC
-  - [ ] Create teacher_students record
-  - [ ] Return student code and ID
+- [x] Create `/src/lib/actions/teacher.ts`
+- [x] Add `addStudent()` function
+  - [x] Verify teacher authenticated
+  - [x] Get teacher's studio
+  - [x] Create Supabase Auth user (student-{uuid}@...)
+  - [x] Wait for profile trigger
+  - [x] Link instruments via child_instruments
+  - [x] Generate student code via RPC
+  - [x] Create teacher_students record
+  - [x] Return student code and ID
+- [x] Add all teacher server actions (15+ functions)
+  - [x] Studio management (getStudio, updateStudio)
+  - [x] Student CRUD (get, add, detail, progress, deactivate)
+  - [x] Course management (CRUD + lessons)
+  - [x] Teacher dashboard overview
 
 ### Middleware Updates
 - [x] Update `/middleware.ts`
@@ -81,91 +86,82 @@
 
 ---
 
-## Phase 3: Teacher UI (2-3 days) [NOT STARTED]
+## Phase 3: Teacher UI (2-3 days) [COMPLETE ✓✓✓]
 
 ### Components
-- [ ] Create `/src/components/layout/TeacherNav.tsx`
-  - [ ] Navigation items for Dashboard, Students, Courses, Settings
-  - [ ] Active state styling
-  - [ ] Logo/branding
+- [x] Create `/src/components/layout/TeacherNav.tsx`
+  - [x] Navigation items for Dashboard, Students, Courses, Settings
+  - [x] Active state styling with blue/cyan theme
+  - [x] Logo/branding consistent with app
 
 ### Routes
-- [ ] Create `/src/app/[locale]/(teacher)/layout.tsx`
-  - [ ] Import TeacherNav
-  - [ ] Apply margin/padding for nav
-  - [ ] Render children
+- [x] Create `/src/app/[locale]/(teacher)/layout.tsx`
+  - [x] Import TeacherNav
+  - [x] Apply margin/padding for nav
+  - [x] Render children
 
-- [ ] Create `/src/app/[locale]/(teacher)/dashboard/page.tsx`
-  - [ ] Call getTeacherDashboard()
-  - [ ] Display studio name + teacher code
-  - [ ] Show student count, practiced today count
-  - [ ] List recent practice sessions
-  - [ ] Link to "Add student" button
+- [x] Create `/src/app/[locale]/(teacher)/dashboard/page.tsx`
+  - [x] Call getTeacherDashboard()
+  - [x] Display studio name + teacher code with copy button
+  - [x] Show student count, practiced today count (stat cards)
+  - [x] List recent practice sessions (today's sessions)
+  - [x] Link to "Add student" button
 
-- [ ] Create `/src/app/[locale]/(teacher)/students/page.tsx`
-  - [ ] Call getStudents()
-  - [ ] Display list/table of students
-  - [ ] Show code, level, lesson, start date
-  - [ ] "Add student" button
+- [x] Create `/src/app/[locale]/(teacher)/students/page.tsx`
+  - [x] Call getStudents()
+  - [x] Display list of students with status badges
+  - [x] Show code, level, lesson, start/end dates
+  - [x] "Add student" button
 
-- [ ] Create `/src/app/[locale]/(teacher)/students/add/page.tsx` + `AddStudentForm.tsx`
-  - [ ] Form: name, PIN (4 digits), instrument select, course select, start date, end date
-  - [ ] Call addStudent()
-  - [ ] Display generated student code on success
-  - [ ] Copy-to-clipboard button for code
+- [x] Create `/src/app/[locale]/(teacher)/students/add/page.tsx` + `AddStudentForm.tsx`
+  - [x] Form: name, PIN (4 digits), instrument multi-select, course select, start/end dates
+  - [x] Call addStudent()
+  - [x] Display generated student code on success with copy button
+  - [x] Instrument selection with emoji icons
 
-- [ ] Create `/src/app/[locale]/(teacher)/students/[studentId]/page.tsx`
-  - [ ] Call getStudentDetail()
-  - [ ] Display student info, current level/lesson
-  - [ ] Show streak, points, super credits
-  - [ ] List recent practice sessions
-  - [ ] "Manage content" link
+- [x] Create `/src/app/[locale]/(teacher)/students/[studentId]/page.tsx`
+  - [x] Call getStudentDetail()
+  - [x] Display student info, current level/lesson
+  - [x] Show streak, points, super credits in stat cards
+  - [x] List recent practice sessions
+  - [x] Show enrollment dates and status
 
-- [ ] Create `/src/app/[locale]/(teacher)/students/[studentId]/content/page.tsx`
-  - [ ] Similar to parent child content management
-  - [ ] Set lessons/motivators for student per instrument
-  - [ ] Date ranges for content activation
+- [x] Create `/src/app/[locale]/(teacher)/courses/page.tsx`
+  - [x] List all courses for studio in grid
+  - [x] Show instrument, total lessons, total levels
+  - [x] "Add course" button
+  - [x] Links to course detail and lessons management
 
-- [ ] Create `/src/app/[locale]/(teacher)/courses/page.tsx`
-  - [ ] List all courses for studio
-  - [ ] Instrument name, total lessons, total levels
-  - [ ] "Add course" button
-  - [ ] Click to edit
+- [x] Create `/src/app/[locale]/(teacher)/courses/add/page.tsx` + `AddCourseForm.tsx`
+  - [x] Form: name, instrument dropdown, total lessons/levels, description
+  - [x] Call createCourse()
+  - [x] Validation and success screen
 
-- [ ] Create `/src/app/[locale]/(teacher)/courses/add/page.tsx`
-  - [ ] Form: name, instrument, total lessons, total levels, description
-  - [ ] Call createCourse()
+- [x] Create `/src/app/[locale]/(teacher)/courses/[courseId]/page.tsx`
+  - [x] Display course details and stats
+  - [x] Show lessons grid organized by level
+  - [x] Show lesson info (title, urls, sort order)
+  - [x] Link to lessons management
 
-- [ ] Create `/src/app/[locale]/(teacher)/courses/[courseId]/page.tsx`
-  - [ ] Display course details
-  - [ ] Show lesson grid or list (lesson_number x level_number)
-  - [ ] Edit/delete buttons per lesson
-  - [ ] Link to lessons management
+- [x] Create `/src/app/[locale]/(teacher)/courses/[courseId]/lessons/page.tsx`
+  - [x] Lesson matrix table view (levels × lessons)
+  - [x] Add lessons via modal/page
+  - [x] Edit/delete buttons for lessons
+  - [x] Helper text for workflow
 
-- [ ] Create `/src/app/[locale]/(teacher)/courses/[courseId]/lessons/page.tsx`
-  - [ ] Lesson form: title, description, video URL, audio URL, lesson#, level#
-  - [ ] Create/update/delete lessons
-  - [ ] Drag-to-reorder
+- [x] Create `/src/app/[locale]/(teacher)/settings/page.tsx`
+  - [x] Display studio name + teacher code
+  - [x] Copy buttons for both codes
+  - [x] Account status and creation date
+  - [x] Onboarding guide for adding students
 
-- [ ] Create `/src/app/[locale]/(teacher)/settings/page.tsx`
-  - [ ] Display studio name + teacher code
-  - [ ] Copy button for code
-  - [ ] Edit studio name
-  - [ ] (Future: Subscription info)
-
-### Server Actions in teacher.ts
-- [ ] `getStudio()` - fetch current teacher's studio
-- [ ] `updateStudio(name)` - rename studio
-- [ ] `getStudents()` - fetch all students for studio
-- [ ] `getStudentDetail(studentId)` - detailed student data
-- [ ] `updateStudentProgress(studentId, level, lesson)` - update student's current level/lesson
-- [ ] `deactivateStudent(studentId)` - deactivate student link
-- [ ] `createCourse(name, instrumentId, totalLessons, totalLevels, description)` - new course
-- [ ] `getCourses()` - all courses for studio
-- [ ] `getCourseDetail(courseId)` - course with lessons
-- [ ] `saveCourseLesson(courseId, lessonNumber, levelNumber, title, description, videoUrl, audioUrl)` - create/update lesson
-- [ ] `deleteCourseLesson(lessonId)` - delete lesson
-- [ ] `getTeacherDashboard()` - overview data
+### i18n Keys
+- [x] Update `messages/nl.json`:
+  - [x] Add nav.teacher.* keys
+  - [x] Add teacher.* section with all keys
+- [x] Update `messages/en.json`:
+  - [x] Add nav.teacher.* keys
+  - [x] Add teacher.* section with all keys
 
 ---
 

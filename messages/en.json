@@ -21,7 +21,13 @@
     "messages": "Messages",
     "dashboard": "Dashboard",
     "children": "Children",
-    "settings": "Settings"
+    "settings": "Settings",
+    "teacher": {
+      "dashboard": "Dashboard",
+      "students": "Students",
+      "courses": "Courses",
+      "settings": "Settings"
+    }
   },
   "auth": {
     "login": "Log in",
@@ -167,6 +173,29 @@
       "sendTo": "Send to {name}",
       "placeholder": "Write a motivational message...",
       "sent": "Message sent!"
+    }
+  },
+  "teacher": {
+    "studio": {
+      "code": "Teacher code",
+      "shareCode": "Share this code with your students"
+    },
+    "dashboard": {
+      "studentCount": "Number of students",
+      "practicedToday": "Practiced today",
+      "recentSessions": "Recent sessions",
+      "noStudents": "No students yet",
+      "noStudentsHint": "Add your first student to get started"
+    },
+    "students": {
+      "add": "Add student",
+      "empty": "No students yet",
+      "emptyHint": "Add students to manage them"
+    },
+    "courses": {
+      "add": "Create course",
+      "empty": "No courses yet",
+      "emptyHint": "Create your first course"
     }
   },
   "settings": {
