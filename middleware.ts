@@ -109,7 +109,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${locale}/teacher/dashboard`, request.url));
   }
 
-  // Parents are allowed to view child/teacher routes (for preview / oversight)
+  // Parents cannot access teacher-only routes
+  if (
+    role === "parent" &&
+    teacherOnlyPaths.some((p) => path.startsWith(p))
+  ) {
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
+  }
 
   // 7. Root locale path — redirect based on role
   if (path === "/" || path === "") {
