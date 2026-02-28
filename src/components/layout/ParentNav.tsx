@@ -6,7 +6,7 @@ import Link from "next/link";
 import { LayoutDashboard, Users, MessageCircle, Settings, LogOut, Music, Baby } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useSupabase } from "@/providers/SupabaseProvider";
+import { useAuth } from "@/providers/SupabaseProvider";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, labelKey: "nav.dashboard" },
@@ -23,12 +23,12 @@ export function ParentNav() {
   const t = useTranslations();
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = useSupabase();
+  const { signOut } = useAuth();
 
   const locale = pathname.split("/")[1];
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await signOut();
     router.push(`/${locale}/login`);
     router.refresh();
   }
@@ -42,7 +42,7 @@ export function ParentNav() {
     }
 
     // Sign out and redirect to login with child tab
-    await supabase.auth.signOut();
+    await signOut();
     router.push(`/${locale}/login?tab=child`);
     router.refresh();
   }

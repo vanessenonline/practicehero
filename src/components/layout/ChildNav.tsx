@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Home, Music, ShoppingBag, Trophy, MessageCircle, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useSupabase } from "@/providers/SupabaseProvider";
+import { useAuth } from "@/providers/SupabaseProvider";
 
 const navItems = [
   { href: "/home", icon: Home, labelKey: "nav.home" },
@@ -26,7 +26,7 @@ export function ChildNav() {
   const t = useTranslations();
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = useSupabase();
+  const { signOut } = useAuth();
 
   // Track if we're in child mode (parent handed device to child)
   const [isChildMode, setIsChildMode] = useState(false);
@@ -49,7 +49,7 @@ export function ChildNav() {
     }
 
     // Sign out and redirect to login
-    await supabase.auth.signOut();
+    await signOut();
     router.push(`/${locale}/login`);
     router.refresh();
   }
