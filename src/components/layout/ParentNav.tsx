@@ -28,9 +28,27 @@ export function ParentNav() {
   const locale = pathname.split("/")[1];
 
   async function handleLogout() {
-    await signOut();
-    router.push(`/${locale}/login`);
-    router.refresh();
+    try {
+      console.log('🔓 Logging out...');
+      await signOut();
+      console.log('✅ Signed out from Supabase');
+
+      // Clear any local storage related to session
+      try {
+        localStorage.removeItem('practicehero_child_mode');
+        localStorage.removeItem('practicehero_family_id');
+      } catch {
+        // localStorage may not be available
+      }
+
+      // Push to login and refresh
+      router.push(`/${locale}/login`);
+      router.refresh();
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      // Force redirect even if signOut failed
+      router.push(`/${locale}/login`);
+    }
   }
 
   async function handleChildMode() {
