@@ -1,0 +1,54 @@
+{
+  "projectName": "PracticeHero",
+  "description": "Music practice motivation app for families and teachers",
+  "recommendedModel": "sonnet",
+  "modelRationale": "Complex full-stack project requiring implementation across Next.js, TypeScript, Supabase, database schema, middleware, and authentication. Sonnet provides optimal balance of capability and efficiency.",
+  "features": [
+    "Parent & Teacher modules",
+    "Child practice tracking",
+    "Gamification (streaks, points, achievements)",
+    "Real-time messaging",
+    "PWA support",
+    "Multi-language (Dutch/English)"
+  ],
+  "currentPhase": {
+    "number": 2,
+    "name": "Authentication",
+    "status": "70% complete (Phase 2b pending)",
+    "nextSteps": [
+      "Create /src/lib/actions/teacher.ts with addStudent() function",
+      "Phase 3: Teacher UI (routes, components, dashboard)",
+      "Phase 4: Login page updates for student tab",
+      "Phase 5: Parent Child Mode switch feature",
+      "Phase 6-7: Code updates, i18n, testing"
+    ]
+  },
+  "documentation": {
+    "plan": "IMPLEMENTATION_PLAN.md - Full technical spec",
+    "tasks": "TODO.md - Phase-by-phase checklist",
+    "context": "CLAUDE.md - Quick reference"
+  },
+  "techStack": {
+    "frontend": "Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui",
+    "backend": "Supabase (PostgreSQL, Auth, Realtime)",
+    "state": "Zustand, React Query",
+    "i18n": "next-intl (nl/en)",
+    "animations": "Framer Motion, Canvas Confetti"
+  },
+  "gitWorkflow": {
+    "convention": "Imperative mood commit messages",
+    "mainBranch": "main",
+    "recentCommits": [
+      "Phase 1: Database migration + types",
+      "Phase 2a: Auth functions + middleware"
+    ]
+  },
+  "estimatedTimeRemaining": "3-4 days for MVP completion",
+  "criticalFiles": [
+    "/supabase/migrations/009_teacher_module.sql",
+    "/src/types/database.ts",
+    "/src/lib/actions/auth.ts",
+    "/middleware.ts",
+    "/IMPLEMENTATION_PLAN.md"
+  ]
+}

@@ -42,23 +42,23 @@
 
 ---
 
-## Phase 2: Authentication (1 day) [NOT STARTED]
+## Phase 2: Authentication (1 day) [IN PROGRESS ✓✓]
 
 ### Teacher Registration & Studio
-- [ ] Add `registerTeacher()` to `/src/lib/actions/auth.ts`
-  - [ ] Call supabase.auth.signUp with role='teacher' in metadata
-  - [ ] Return appropriate response
-- [ ] Add `createStudio()` to `/src/lib/actions/auth.ts`
-  - [ ] Generate teacher_code via RPC
-  - [ ] Insert studio record
-  - [ ] Return studio ID and teacher code
+- [x] Add `registerTeacher()` to `/src/lib/actions/auth.ts`
+  - [x] Call supabase.auth.signUp with role='teacher' in metadata
+  - [x] Return appropriate response
+- [x] Add `createStudio()` to `/src/lib/actions/auth.ts`
+  - [x] Generate teacher_code via RPC
+  - [x] Insert studio record
+  - [x] Return studio ID and teacher code
 
 ### Student Login
-- [ ] Add `loginStudent()` to `/src/lib/actions/auth.ts`
-  - [ ] Call lookup_student_by_codes() RPC
-  - [ ] Get student's auth email via admin
-  - [ ] Sign in with PIN password
-  - [ ] Error handling
+- [x] Add `loginStudent()` to `/src/lib/actions/auth.ts`
+  - [x] Call lookup_student_by_codes() RPC
+  - [x] Get student's auth email via admin
+  - [x] Sign in with PIN password
+  - [x] Error handling
 
 ### Teacher Creates Student
 - [ ] Create `/src/lib/actions/teacher.ts`
@@ -73,11 +73,11 @@
   - [ ] Return student code and ID
 
 ### Middleware Updates
-- [ ] Update `/middleware.ts`
-  - [ ] Add teacherOnlyPaths array
-  - [ ] Add role === 'teacher' redirect logic
-  - [ ] Update root path redirect for teacher role
-  - [ ] Add /register/teacher to public paths
+- [x] Update `/middleware.ts`
+  - [x] Add teacherOnlyPaths array
+  - [x] Add role === 'teacher' redirect logic
+  - [x] Update root path redirect for teacher role
+  - [x] Update teacher redirect in public paths handling
 
 ---
 

@@ -1,5 +1,10 @@
 # PracticeHero - Project Context for Claude Code
 
+## 🤖 **RECOMMENDED MODEL: SONNET**
+> **Why Sonnet?** This is a complex full-stack project (Next.js, TypeScript, Supabase, database design, middleware, authentication). Sonnet provides the right balance of capability and efficiency for implementation work. NOT Haiku (too limited), NOT Opus (overkill cost).
+
+---
+
 ## What Is This Project?
 
 **PracticeHero** is a music practice motivation app for families and music teachers. It helps children maintain consistent practice habits through gamification (streaks, points, achievements, shop system) while giving parents and teachers insight into progress.
