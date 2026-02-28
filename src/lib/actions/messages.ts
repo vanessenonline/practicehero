@@ -51,7 +51,17 @@ export async function sendMessage(
     .eq("id", recipientId)
     .single();
 
-  if (!recipientProfile || recipientProfile.family_id !== senderProfile.family_id) {
+  if (!recipientProfile) {
+    return { error: "Ontvanger niet gevonden" };
+  }
+
+  // Messages only work within a family context (both must have the same family_id)
+  // Teacher students (family_id = null) cannot participate in family messaging
+  if (
+    senderProfile.family_id === null ||
+    recipientProfile.family_id === null ||
+    recipientProfile.family_id !== senderProfile.family_id
+  ) {
     return { error: "Ontvanger niet gevonden" };
   }
 

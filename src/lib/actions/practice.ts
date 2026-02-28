@@ -50,12 +50,25 @@ export async function startPracticeSession(
     return { error: "Alleen kinderen kunnen oefensessies starten." };
   }
 
+  // Check if this child is a teacher student (has studio_id)
+  let studioId: string | null = null;
+  const { data: teacherStudent } = await supabase
+    .from("teacher_students")
+    .select("studio_id")
+    .eq("student_id", user.id)
+    .single();
+
+  if (teacherStudent) {
+    studioId = teacherStudent.studio_id;
+  }
+
   const { data: session, error } = await supabase
     .from("practice_sessions")
     .insert({
       child_id: user.id,
       instrument_id: instrumentId,
       family_id: profile.family_id,
+      studio_id: studioId,
       started_at: new Date().toISOString(),
       status: "active",
       audio_verified: false,
