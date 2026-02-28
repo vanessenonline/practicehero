@@ -1,0 +1,14 @@
+# Supabase configuration
+[project]
+project_id = "tlbvbktvqxawcmgksxls"
+
+[api]
+enabled = true
+max_rows = 1000
+
+[db]
+major_version = 15
+
+[realtime]
+enabled = true
+max_bytes_per_second = 0
