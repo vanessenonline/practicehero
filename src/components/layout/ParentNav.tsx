@@ -30,82 +30,50 @@ export function ParentNav() {
   const locale = pathname.split("/")[1];
 
   async function handleLogout() {
+    console.log('🔓 Logging out...');
+
+    // Fire off signOut in background (don't wait for it)
+    // The Supabase Lock Manager can hang, so we redirect immediately
+    signOut().catch((err) => {
+      console.warn('⚠️  Background signOut failed (expected):', err instanceof Error ? err.message : err);
+    });
+
+    // Clear any local storage related to session
     try {
-      console.log('🔓 Logging out...');
-      try {
-        // Use a timeout to handle potential Lock Manager hanging
-        const signOutPromise = signOut();
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('SignOut timeout')), 5000)
-        );
-        await Promise.race([signOutPromise, timeoutPromise]);
-        console.log('✅ Signed out from Supabase');
-      } catch (signOutError) {
-        console.warn('⚠️  SignOut failed or timed out, proceeding with logout anyway:', signOutError);
-      }
-
-      // Clear any local storage related to session
-      try {
-        localStorage.removeItem('practicehero_child_mode');
-        localStorage.removeItem('practicehero_family_id');
-      } catch {
-        // localStorage may not be available
-      }
-
-      // Push to login and refresh
-      router.push(`/${locale}/login`);
-      router.refresh();
-    } catch (error) {
-      console.error('❌ Logout error:', error);
-      // Force redirect using window.location as fallback
-      try {
-        router.push(`/${locale}/login`);
-      } catch {
-        // Last resort: hard redirect
-        window.location.href = `/${locale}/login`;
-      }
+      localStorage.removeItem('practicehero_child_mode');
+      localStorage.removeItem('practicehero_family_id');
+      console.log('✅ Local storage cleared');
+    } catch {
+      // localStorage may not be available
+      console.warn('⚠️  Could not clear localStorage');
     }
+
+    // Immediately redirect using hard redirect (avoid router.push delays)
+    console.log(`📍 Redirecting to login immediately...`);
+    window.location.href = `/${locale}/login`;
   }
 
   async function handleChildMode() {
+    console.log('👶 Entering child mode...');
+
+    // Set flag to show child login tab
     try {
-      console.log('👶 Entering child mode...');
-
-      // Set flag to show child login tab
-      try {
-        localStorage.setItem("practicehero_child_mode", "true");
-        console.log('✅ Child mode flag set');
-      } catch {
-        console.warn('⚠️  localStorage not available');
-      }
-
-      // Sign out and redirect to login with child tab
-      console.log('🔓 Signing out...');
-      try {
-        // Use a timeout to handle potential Lock Manager hanging
-        const signOutPromise = signOut();
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('SignOut timeout')), 5000)
-        );
-        await Promise.race([signOutPromise, timeoutPromise]);
-        console.log('✅ Signed out');
-      } catch (signOutError) {
-        console.warn('⚠️  SignOut failed or timed out, forcing redirect anyway:', signOutError);
-      }
-
-      console.log(`📍 Redirecting to login...`);
-      router.push(`/${locale}/login?tab=child`);
-      router.refresh();
-    } catch (error) {
-      console.error('❌ Child mode error:', error);
-      // Force redirect using window.location as fallback
-      try {
-        router.push(`/${locale}/login?tab=child`);
-      } catch {
-        // Last resort: hard redirect
-        window.location.href = `/${locale}/login?tab=child`;
-      }
+      localStorage.setItem("practicehero_child_mode", "true");
+      console.log('✅ Child mode flag set');
+    } catch {
+      console.warn('⚠️  localStorage not available');
     }
+
+    // Fire off signOut in background (don't wait for it)
+    // The Supabase Lock Manager can hang, so we redirect immediately
+    console.log('🔓 Starting sign out in background...');
+    signOut().catch((err) => {
+      console.warn('⚠️  Background signOut failed (expected):', err instanceof Error ? err.message : err);
+    });
+
+    // Immediately redirect using hard redirect (avoid router.push delays)
+    console.log(`📍 Redirecting to login immediately...`);
+    window.location.href = `/${locale}/login?tab=child`;
   }
 
   return (
