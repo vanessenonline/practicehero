@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, Music, ShoppingBag, Trophy, MessageCircle, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/providers/SupabaseProvider";
 
 const navItems = [
   { href: "/home", icon: Home, labelKey: "nav.home" },
@@ -21,12 +20,14 @@ const navItems = [
  * Bottom navigation bar for the child view.
  * Colorful, large touch targets, fun design for kids.
  * Includes a "back to parent" button when in child mode.
+ *
+ * Uses the server-side /api/auth/logout route instead of client-side
+ * Supabase signOut(), because the latter hangs due to the Browser Lock
+ * Manager API and fails to clear session cookies.
  */
 export function ChildNav() {
   const t = useTranslations();
   const pathname = usePathname();
-  const router = useRouter();
-  const { signOut } = useAuth();
 
   // Track if we're in child mode (parent handed device to child)
   const [isChildMode, setIsChildMode] = useState(false);
@@ -40,31 +41,19 @@ export function ChildNav() {
     setIsChildMode(childModeFlag === "true");
   }, []);
 
-  // Handle back to parent
-  async function handleBackToParent() {
+  /** Go back to parent: clear flag, log out via server, redirect to parent login */
+  function handleBackToParent() {
+    console.log('👪 Going back to parent via server-side route...');
+
     try {
-      console.log('👪 Going back to parent...');
       localStorage.removeItem("practicehero_child_mode");
       console.log('✅ Child mode cleared');
     } catch {
       // localStorage may not be available
     }
 
-    try {
-      console.log('🔓 Logging out...');
-      const signOutPromise = signOut();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout')), 3000)
-      );
-      await Promise.race([signOutPromise, timeoutPromise]);
-      console.log('✅ Signed out from Supabase');
-    } catch (error) {
-      console.warn('⚠️  SignOut timed out, proceeding anyway:', error instanceof Error ? error.message : error);
-    }
-
-    // Push to login - middleware should allow it since user is signed out
-    console.log(`📍 Redirecting to login...`);
-    router.push(`/${locale}/login`);
+    // Use server-side logout which properly clears auth cookies
+    window.location.href = `/api/auth/logout?redirect=/${locale}/login`;
   }
 
   return (

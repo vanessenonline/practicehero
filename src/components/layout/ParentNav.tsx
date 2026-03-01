@@ -1,12 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, Users, MessageCircle, Settings, LogOut, Music, Baby } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/providers/SupabaseProvider";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, labelKey: "nav.dashboard" },
@@ -19,51 +18,38 @@ const navItems = [
  * Top/side navigation for the parent dashboard.
  * Clean, professional design with child mode switch.
  * Features: Dashboard, Children management, Messages, Settings, Child mode toggle, Logout
- * Deployment: Public repository enabled, Vercel can now deploy
+ *
+ * Logout and child mode both use the server-side /api/auth/logout route
+ * instead of the client-side Supabase signOut(), because the latter hangs
+ * due to the Browser Lock Manager API and fails to clear session cookies.
  */
 export function ParentNav() {
   const t = useTranslations();
   const pathname = usePathname();
-  const router = useRouter();
-  const { signOut } = useAuth();
 
   const locale = pathname.split("/")[1];
 
-  async function handleLogout() {
-    console.log('🔓 Logging out...');
-
-    // Sign out with timeout - must complete before redirect
-    // so middleware doesn't redirect authenticated user back to dashboard
-    try {
-      const signOutPromise = signOut();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout')), 3000)
-      );
-      await Promise.race([signOutPromise, timeoutPromise]);
-      console.log('✅ Signed out');
-    } catch (err) {
-      console.warn('⚠️  SignOut timed out, proceeding anyway:', err instanceof Error ? err.message : err);
-    }
+  /** Log out and redirect to parent login page */
+  function handleLogout() {
+    console.log('🔓 Logging out via server-side route...');
 
     // Clear any local storage related to session
     try {
       localStorage.removeItem('practicehero_child_mode');
       localStorage.removeItem('practicehero_family_id');
-      console.log('✅ Local storage cleared');
     } catch {
       // localStorage may not be available
-      console.warn('⚠️  Could not clear localStorage');
     }
 
-    // Now redirect - middleware should allow it since user is signed out
-    console.log(`📍 Redirecting to login...`);
-    router.push(`/${locale}/login`);
+    // Use server-side logout which properly clears auth cookies
+    window.location.href = `/api/auth/logout?redirect=/${locale}/login`;
   }
 
-  async function handleChildMode() {
-    console.log('👶 Entering child mode...');
+  /** Switch to child mode: set flag, log out, redirect to child login */
+  function handleChildMode() {
+    console.log('👶 Entering child mode via server-side route...');
 
-    // Set flag to show child login tab
+    // Set flag so ChildNav shows the "back to parent" button
     try {
       localStorage.setItem("practicehero_child_mode", "true");
       console.log('✅ Child mode flag set');
@@ -71,23 +57,9 @@ export function ParentNav() {
       console.warn('⚠️  localStorage not available');
     }
 
-    // Sign out with timeout - must complete before redirect
-    // so middleware doesn't redirect authenticated user back to dashboard
-    console.log('🔓 Signing out...');
-    try {
-      const signOutPromise = signOut();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout')), 3000)
-      );
-      await Promise.race([signOutPromise, timeoutPromise]);
-      console.log('✅ Signed out');
-    } catch (err) {
-      console.warn('⚠️  SignOut timed out, proceeding anyway:', err instanceof Error ? err.message : err);
-    }
-
-    // Now redirect - middleware should allow it since user is signed out
-    console.log(`📍 Redirecting to login...`);
-    router.push(`/${locale}/login?tab=child`);
+    // Use server-side logout which properly clears auth cookies
+    // encodeURIComponent prevents ?tab=child from being parsed as a logout param
+    window.location.href = `/api/auth/logout?redirect=${encodeURIComponent(`/${locale}/login?tab=child`)}`;
   }
 
   return (
