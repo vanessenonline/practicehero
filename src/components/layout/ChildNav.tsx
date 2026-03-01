@@ -52,17 +52,19 @@ export function ChildNav() {
 
     try {
       console.log('🔓 Logging out...');
-      await signOut();
+      const signOutPromise = signOut();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 3000)
+      );
+      await Promise.race([signOutPromise, timeoutPromise]);
       console.log('✅ Signed out from Supabase');
-
-      // Push to login and refresh
-      router.push(`/${locale}/login`);
-      router.refresh();
     } catch (error) {
-      console.error('❌ Logout error:', error);
-      // Force redirect even if signOut failed
-      router.push(`/${locale}/login`);
+      console.warn('⚠️  SignOut timed out, proceeding anyway:', error instanceof Error ? error.message : error);
     }
+
+    // Push to login - middleware should allow it since user is signed out
+    console.log(`📍 Redirecting to login...`);
+    router.push(`/${locale}/login`);
   }
 
   return (
