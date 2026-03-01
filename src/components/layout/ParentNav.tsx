@@ -32,11 +32,18 @@ export function ParentNav() {
   async function handleLogout() {
     console.log('🔓 Logging out...');
 
-    // Fire off signOut in background (don't wait for it)
-    // The Supabase Lock Manager can hang, so we redirect immediately
-    signOut().catch((err) => {
-      console.warn('⚠️  Background signOut failed (expected):', err instanceof Error ? err.message : err);
-    });
+    // Sign out with timeout - must complete before redirect
+    // so middleware doesn't redirect authenticated user back to dashboard
+    try {
+      const signOutPromise = signOut();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 3000)
+      );
+      await Promise.race([signOutPromise, timeoutPromise]);
+      console.log('✅ Signed out');
+    } catch (err) {
+      console.warn('⚠️  SignOut timed out, proceeding anyway:', err instanceof Error ? err.message : err);
+    }
 
     // Clear any local storage related to session
     try {
@@ -48,9 +55,9 @@ export function ParentNav() {
       console.warn('⚠️  Could not clear localStorage');
     }
 
-    // Immediately redirect using hard redirect (avoid router.push delays)
-    console.log(`📍 Redirecting to login immediately...`);
-    window.location.href = `/${locale}/login`;
+    // Now redirect - middleware should allow it since user is signed out
+    console.log(`📍 Redirecting to login...`);
+    router.push(`/${locale}/login`);
   }
 
   async function handleChildMode() {
@@ -64,16 +71,23 @@ export function ParentNav() {
       console.warn('⚠️  localStorage not available');
     }
 
-    // Fire off signOut in background (don't wait for it)
-    // The Supabase Lock Manager can hang, so we redirect immediately
-    console.log('🔓 Starting sign out in background...');
-    signOut().catch((err) => {
-      console.warn('⚠️  Background signOut failed (expected):', err instanceof Error ? err.message : err);
-    });
+    // Sign out with timeout - must complete before redirect
+    // so middleware doesn't redirect authenticated user back to dashboard
+    console.log('🔓 Signing out...');
+    try {
+      const signOutPromise = signOut();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 3000)
+      );
+      await Promise.race([signOutPromise, timeoutPromise]);
+      console.log('✅ Signed out');
+    } catch (err) {
+      console.warn('⚠️  SignOut timed out, proceeding anyway:', err instanceof Error ? err.message : err);
+    }
 
-    // Immediately redirect using hard redirect (avoid router.push delays)
-    console.log(`📍 Redirecting to login immediately...`);
-    window.location.href = `/${locale}/login?tab=child`;
+    // Now redirect - middleware should allow it since user is signed out
+    console.log(`📍 Redirecting to login...`);
+    router.push(`/${locale}/login?tab=child`);
   }
 
   return (
