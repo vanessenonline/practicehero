@@ -54,17 +54,30 @@ export function ParentNav() {
   }
 
   async function handleChildMode() {
-    // Set flag to show child login tab
     try {
-      localStorage.setItem("practicehero_child_mode", "true");
-    } catch {
-      // localStorage may not be available
-    }
+      console.log('👶 Entering child mode...');
 
-    // Sign out and redirect to login with child tab
-    await signOut();
-    router.push(`/${locale}/login?tab=child`);
-    router.refresh();
+      // Set flag to show child login tab
+      try {
+        localStorage.setItem("practicehero_child_mode", "true");
+        console.log('✅ Child mode flag set');
+      } catch {
+        console.warn('⚠️  localStorage not available');
+      }
+
+      // Sign out and redirect to login with child tab
+      console.log('🔓 Signing out...');
+      await signOut();
+      console.log('✅ Signed out');
+
+      console.log(`📍 Redirecting to login...`);
+      router.push(`/${locale}/login?tab=child`);
+      router.refresh();
+    } catch (error) {
+      console.error('❌ Child mode error:', error);
+      // Fallback redirect
+      router.push(`/${locale}/login?tab=child`);
+    }
   }
 
   return (
