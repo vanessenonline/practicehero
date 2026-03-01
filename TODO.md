@@ -1,381 +1,184 @@
 # PracticeHero Implementation TODO
 
 **Start Date:** 2026-02-28
-**Status:** Ready to implement
-**Total Estimated Time:** 5-7 days
+**Last Updated:** 2026-03-01
+**Status:** Phase 7 in progress (bug fixes applied, further testing needed)
 
 ---
 
-## Phase 1: Database (1 day) [IN PROGRESS ✓]
+## Phase 1: Database (1 day) [COMPLETE ✅]
 
-### Migration 009: Teacher Module
-- [x] Create file `/supabase/migrations/009_teacher_module.sql`
-- [x] Add user_role ENUM value 'teacher'
-- [x] Create studios table
-- [x] Create courses table
-- [x] Create course_lessons table
-- [x] Create teacher_students table
-- [x] Alter profiles.family_id to nullable
-- [x] Alter practice_sessions (add studio_id, make family_id nullable)
-- [x] Alter streaks, points, super_credits (make family_id nullable)
-- [x] Create RLS policies (studios, courses, course_lessons, teacher_students)
-- [x] Extend RLS policies on existing tables (practice_sessions, streaks, points, super_credits)
-- [x] Create RPC function: lookup_student_by_codes()
-- [x] Create RPC function: generate_teacher_code()
-- [x] Create RPC function: generate_student_code()
-- [ ] Test migration locally with `supabase migration up`
-
-### TypeScript Types
-- [x] Update `src/types/database.ts`
-  - [x] Change UserRole to include 'teacher'
-  - [x] Make Profile.family_id nullable
-  - [x] Make PracticeSession.family_id nullable
-  - [x] Add studio_id to PracticeSession
-  - [x] Add Studio interface
-  - [x] Add Course interface
-  - [x] Add CourseLesson interface
-  - [x] Add TeacherStudent interface
-
-### handle_new_user Trigger
-- [ ] Check if trigger needs updating for teacher role
-- [ ] OR create post-registration createStudio() action
+- [x] Migration 009-012: Teacher module (studios, courses, course_lessons, teacher_students)
+- [x] Add user_role ENUM values: 'teacher'
+- [x] Make profiles.family_id nullable
+- [x] RLS policies (studios, courses, teacher_students)
+- [x] RPC functions: generate_teacher_code, generate_student_code, lookup_student_by_codes
+- [x] Update TypeScript types (database.ts)
+- [ ] **PENDING:** Migration 013 — add 'student' role to user_role ENUM (not yet applied to production)
 
 ---
 
-## Phase 2: Authentication (1 day) [COMPLETE ✓✓✓]
+## Phase 2: Authentication (1 day) [COMPLETE ✅]
 
-### Teacher Registration & Studio
-- [x] Add `registerTeacher()` to `/src/lib/actions/auth.ts`
-  - [x] Call supabase.auth.signUp with role='teacher' in metadata
-  - [x] Return appropriate response
-- [x] Add `createStudio()` to `/src/lib/actions/auth.ts`
-  - [x] Generate teacher_code via RPC
-  - [x] Insert studio record
-  - [x] Return studio ID and teacher code
-
-### Student Login
-- [x] Add `loginStudent()` to `/src/lib/actions/auth.ts`
-  - [x] Call lookup_student_by_codes() RPC
-  - [x] Get student's auth email via admin
-  - [x] Sign in with PIN password
-  - [x] Error handling
-
-### Teacher Creates Student
-- [x] Create `/src/lib/actions/teacher.ts`
-- [x] Add `addStudent()` function
-  - [x] Verify teacher authenticated
-  - [x] Get teacher's studio
-  - [x] Create Supabase Auth user (student-{uuid}@...)
-  - [x] Wait for profile trigger
-  - [x] Link instruments via child_instruments
-  - [x] Generate student code via RPC
-  - [x] Create teacher_students record
-  - [x] Return student code and ID
-- [x] Add all teacher server actions (15+ functions)
-  - [x] Studio management (getStudio, updateStudio)
-  - [x] Student CRUD (get, add, detail, progress, deactivate)
-  - [x] Course management (CRUD + lessons)
-  - [x] Teacher dashboard overview
-
-### Middleware Updates
-- [x] Update `/middleware.ts`
-  - [x] Add teacherOnlyPaths array
-  - [x] Add role === 'teacher' redirect logic
-  - [x] Update root path redirect for teacher role
-  - [x] Update teacher redirect in public paths handling
+- [x] registerTeacher() in auth.ts
+- [x] createStudio() in auth.ts
+- [x] loginStudent() in auth.ts
+- [x] addStudent() in teacher.ts
+- [x] All 15+ teacher server actions in teacher.ts
+- [x] Middleware updates for teacher role routing
 
 ---
 
-## Phase 3: Teacher UI (2-3 days) [COMPLETE ✓✓✓]
+## Phase 3: Teacher UI (2-3 days) [COMPLETE ✅]
 
-### Components
-- [x] Create `/src/components/layout/TeacherNav.tsx`
-  - [x] Navigation items for Dashboard, Students, Courses, Settings
-  - [x] Active state styling with blue/cyan theme
-  - [x] Logo/branding consistent with app
-
-### Routes
-- [x] Create `/src/app/[locale]/(teacher)/layout.tsx`
-  - [x] Import TeacherNav
-  - [x] Apply margin/padding for nav
-  - [x] Render children
-
-- [x] Create `/src/app/[locale]/(teacher)/dashboard/page.tsx`
-  - [x] Call getTeacherDashboard()
-  - [x] Display studio name + teacher code with copy button
-  - [x] Show student count, practiced today count (stat cards)
-  - [x] List recent practice sessions (today's sessions)
-  - [x] Link to "Add student" button
-
-- [x] Create `/src/app/[locale]/(teacher)/students/page.tsx`
-  - [x] Call getStudents()
-  - [x] Display list of students with status badges
-  - [x] Show code, level, lesson, start/end dates
-  - [x] "Add student" button
-
-- [x] Create `/src/app/[locale]/(teacher)/students/add/page.tsx` + `AddStudentForm.tsx`
-  - [x] Form: name, PIN (4 digits), instrument multi-select, course select, start/end dates
-  - [x] Call addStudent()
-  - [x] Display generated student code on success with copy button
-  - [x] Instrument selection with emoji icons
-
-- [x] Create `/src/app/[locale]/(teacher)/students/[studentId]/page.tsx`
-  - [x] Call getStudentDetail()
-  - [x] Display student info, current level/lesson
-  - [x] Show streak, points, super credits in stat cards
-  - [x] List recent practice sessions
-  - [x] Show enrollment dates and status
-
-- [x] Create `/src/app/[locale]/(teacher)/courses/page.tsx`
-  - [x] List all courses for studio in grid
-  - [x] Show instrument, total lessons, total levels
-  - [x] "Add course" button
-  - [x] Links to course detail and lessons management
-
-- [x] Create `/src/app/[locale]/(teacher)/courses/add/page.tsx` + `AddCourseForm.tsx`
-  - [x] Form: name, instrument dropdown, total lessons/levels, description
-  - [x] Call createCourse()
-  - [x] Validation and success screen
-
-- [x] Create `/src/app/[locale]/(teacher)/courses/[courseId]/page.tsx`
-  - [x] Display course details and stats
-  - [x] Show lessons grid organized by level
-  - [x] Show lesson info (title, urls, sort order)
-  - [x] Link to lessons management
-
-- [x] Create `/src/app/[locale]/(teacher)/courses/[courseId]/lessons/page.tsx`
-  - [x] Lesson matrix table view (levels × lessons)
-  - [x] Add lessons via modal/page
-  - [x] Edit/delete buttons for lessons
-  - [x] Helper text for workflow
-
-- [x] Create `/src/app/[locale]/(teacher)/settings/page.tsx`
-  - [x] Display studio name + teacher code
-  - [x] Copy buttons for both codes
-  - [x] Account status and creation date
-  - [x] Onboarding guide for adding students
-
-### i18n Keys
-- [x] Update `messages/nl.json`:
-  - [x] Add nav.teacher.* keys
-  - [x] Add teacher.* section with all keys
-- [x] Update `messages/en.json`:
-  - [x] Add nav.teacher.* keys
-  - [x] Add teacher.* section with all keys
+- [x] TeacherNav.tsx
+- [x] Teacher layout with nav
+- [x] /teacher/dashboard — stats, recent sessions
+- [x] /teacher/students — list with status badges
+- [x] /teacher/students/add — form + generated student code
+- [x] /teacher/students/[studentId] — detail with practice history
+- [x] /teacher/courses — grid of courses
+- [x] /teacher/courses/add — form
+- [x] /teacher/courses/[courseId] — detail with lesson grid
+- [x] /teacher/courses/[courseId]/lessons — lesson matrix management
+- [x] /teacher/settings — studio info + teacher code
+- [x] i18n keys (nl.json + en.json)
 
 ---
 
-## Phase 4: Login Updates (0.5 days) [COMPLETE ✓]
+## Phase 4: Login Updates (0.5 days) [COMPLETE ✅]
 
-### Login Page
-- [x] Update `/src/app/[locale]/(auth)/login/page.tsx`
-  - [x] Change TabsList from grid-cols-2 to grid-cols-3
-  - [x] Add student login TabsContent with StudentLoginForm
-  - [x] Import StudentLoginForm component
-
-### StudentLoginForm Component
-- [x] Create `/src/components/auth/StudentLoginForm.tsx`
-  - [x] Teacher code input (T-XXXX format with validation)
-  - [x] Student code input (S-XXXX format with validation)
-  - [x] PIN input (4 digits, masked, numeric only)
-  - [x] Call loginStudent() with form validation
-  - [x] Handle errors and display messages
-  - [x] Loading state with spinner
-
-### Register Page
-- [x] Update `/src/app/[locale]/(auth)/register/page.tsx`
-  - [x] Add tabs: Parent register | Teacher register
-  - [x] Teacher form: studio name, email, password, confirm password
-  - [x] Call registerTeacher() + createStudio() on submit
-  - [x] Email confirmation handling for both types
-  - [x] Proper error handling and validation
+- [x] Login page: 3-tab system (parent | child | student)
+- [x] StudentLoginForm component (teacher_code + student_code + PIN)
+- [x] Register page: 2-tab system (parent | teacher)
+- [x] Login page reads `?tab=child` query param to preselect tab
 
 ---
 
-## Phase 5: Parent Child Mode Switch (0.5 days) [COMPLETE ✓]
+## Phase 5: Parent Child Mode Switch (0.5 days) [COMPLETE ✅]
 
-### ParentNav.tsx
-- [x] Add import: `{ Baby } from "lucide-react"`
-- [x] Add `handleChildMode()` function
-  - [x] Set localStorage.practicehero_child_mode = 'true'
-  - [x] Call supabase.auth.signOut()
-  - [x] Navigate to `/${locale}/login?tab=child`
-- [x] Add Button before LogOut:
-  ```
-  <Button variant="ghost" size="sm" onClick={handleChildMode}>
-    <Baby className="h-4 w-4" />
-    <span className="hidden sm:inline ml-1">{t("parent.childMode")}</span>
-  </Button>
-  ```
-
-### ChildNav.tsx
-- [x] Add imports: `useEffect`, `useState`, `ArrowLeft`
-- [x] Add state: `isChildMode`
-- [x] Add useEffect to check localStorage
-- [x] Add `handleBackToParent()` function
-  - [x] Remove localStorage flag
-  - [x] signOut
-  - [x] Navigate to login
-- [x] Add floating button (if isChildMode):
-  ```
-  {isChildMode && (
-    <Button onClick={handleBackToParent} className="...">
-      <ArrowLeft className="h-4 w-4" />
-      <span className="hidden sm:inline">Terug naar ouder</span>
-    </Button>
-  )}
-  ```
-
-### Login Page
-- [x] Add `useSearchParams()` hook
-- [x] Read `tab` query parameter
-- [x] Set `defaultTab` based on parameter
-- [x] Update Tabs component: `defaultValue={defaultTab}`
-
-### i18n Keys
-- [x] Add "parent.childMode": "Kindmodus" (NL) / "Child Mode" (EN)
-- [x] Add "auth.backToParent": "Terug naar ouder" (NL) / "Back to parent" (EN)
+- [x] Kindmodus knop in ParentNav.tsx
+- [x] "Terug naar ouder" floating button in ChildNav.tsx
+- [x] localStorage flag: practicehero_child_mode
+- [x] **BUGFIX:** Server-side logout via /api/auth/logout (commit b6d74fd)
+  - Client-side signOut() hing 10s door Browser Lock Manager bug
+  - Cookies werden niet verwijderd → middleware redirect loop
+  - Server-side route verwijdert sb-* cookies expliciet
 
 ---
 
-## Phase 6: Existing Code Updates (1 day) [COMPLETE ✓]
+## Phase 6: Existing Code Updates (1 day) [COMPLETE ✅]
 
-### practice.ts
-- [x] Update `startPracticeSession()`
-  - [x] Query teacher_students table for student
-  - [x] Pass studio_id to practice_sessions insert if exists
-  - [x] family_id logic already handles null correctly
-
-- [x] Update `completePracticeSession()`
-  - [x] Already null-safe - passes family_id (null or value) to inserts
-  - [x] Points/super_credits/streaks all handle NULL family_id correctly
-
-### child.ts
-- [x] Review `getChildDashboard()`
-  - [x] All queries use child_id - independent of family_id
-  - [x] No family_id filtering needed - already safe
-
-### shop.ts
-- [x] Review `purchaseItem()`, `useStreakRestorer()`, `usePauseDay()`
-  - [x] All pass family_id to inserts - handles null correctly
-
-### messages.ts
-- [x] Update message handling
-  - [x] Add null-check: teacher students (family_id=null) cannot use family messaging
-  - [x] Returns error "Ontvanger niet gevonden" for null family attempts
-
-### i18n Keys
-- [ ] Update `messages/nl.json`:
-  - [ ] Add parent.childMode: "Kindmodus"
-  - [ ] Add auth.backToParent: "Terug naar ouder"
-  - [ ] Add all teacher.* keys (nav, dashboard, students, courses, settings)
-  - [ ] Add auth.studentLogin, teacher_code, student_code, etc.
-
-- [ ] Update `messages/en.json`:
-  - [ ] Same keys in English
-
-### SupabaseProvider
-- [ ] Check if provider handles role='teacher' properly
-- [ ] Ensure no hardcoded parent/child role checks
+- [x] practice.ts: startPracticeSession() met studio_id support
+- [x] practice.ts: completePracticeSession() null-safe voor family_id
+- [x] practice.ts: getTodayPracticeSeconds() — nieuw, voor cumulatieve tijdtracking
+- [x] child.ts: getChildDashboard() — al null-safe
+- [x] shop.ts: null-safe family_id in alle purchases
+- [x] messages.ts: null-check voor teacher students zonder family
+- [x] **BUGFIX:** PracticeSession.tsx laadt nu cumulatieve oefentijd op mount (commit 8d3c1df)
 
 ---
 
-## Phase 7: Testing (1 day) [NOT STARTED]
-
-### Database Tests
-- [ ] [ ] Verify migration applied correctly
-- [ ] [ ] Check RLS policies work (list studios, courses by owner)
-- [ ] [ ] Test RPC functions (generate codes, lookup by codes)
+## Phase 7: Testing & Bug Fixes [IN PROGRESS 🔄]
 
 ### Auth Flow Tests
-- [ ] [ ] Register teacher → verify studio created with teacher_code
-- [ ] [ ] Create student → verify auth user + profile + teacher_students link
-- [ ] [ ] Login as student with teacher_code + student_code + PIN
-- [ ] [ ] Verify middleware redirects teacher to /teacher/dashboard
-- [ ] [ ] Verify student (child role) redirects to /home
+- [x] **GEFIXT:** Kindmodus-knop werkt (→ kind loginscherm)
+- [x] **GEFIXT:** Uitloggen werkt (→ parent loginscherm)
+- [x] **GEFIXT:** "Terug naar ouder" werkt (→ parent loginscherm)
+- [ ] Register teacher → verify studio aangemaakt met teacher_code
+- [ ] Create student → verify auth user + profile + teacher_students link
+- [ ] Login als student met teacher_code + student_code + PIN
+- [ ] Verify middleware stuurt teacher door naar /teacher/dashboard
+- [ ] Verify student (child role) gaat naar /home
 
 ### UI/Feature Tests
-- [ ] [ ] Teacher dashboard shows students and recent sessions
-- [ ] [ ] Add student form generates student code
-- [ ] [ ] Student detail page shows practice data
-- [ ] [ ] Create course + lessons
-- [ ] [ ] Parent clicks "Kindmodus" → child login appears with tab selected
-- [ ] [ ] Child logs in, clicks "Terug naar ouder" → parent login appears
+- [ ] Teacher dashboard toont studenten en recente sessies
+- [ ] Student toevoegen genereert student code
+- [ ] Student detail pagina toont oefendata
+- [ ] Cursus aanmaken + lessen toevoegen
+- [x] **GEFIXT:** Practice tijd reset — laadt nu correct vanuit DB (commit 8d3c1df)
 
-### RLS/Security Tests
-- [ ] [ ] Parent cannot see other families' data
-- [ ] [ ] Teacher cannot see other studios' students
-- [ ] [ ] Child cannot access parent routes
-- [ ] [ ] Student cannot see courses not enrolled in
+### Database Tests
+- [ ] Verify migration 013 toepassen ('student' role enum)
+- [ ] Check RLS policies: parent kan alleen eigen family data zien
+- [ ] Check RLS policies: teacher kan alleen eigen studio data zien
+- [ ] Test RPC functions (generate codes, lookup by codes)
+
+### Security Tests
+- [ ] Parent kan GEEN data van andere families zien
+- [ ] Teacher kan GEEN studenten van andere studios zien
+- [ ] Kind kan GEEN parent routes bereiken
+- [ ] Student kan GEEN cursussen zien waar ze niet aan deelnemen
 
 ### Multi-User Tests
-- [ ] [ ] Create 2 teachers, verify studios separate
-- [ ] [ ] Create students under each teacher, verify isolation
-- [ ] [ ] Parent + student (same child) both see practice data
+- [ ] 2 teachers aanmaken → verificeer studios los van elkaar
+- [ ] Studenten onder elke teacher → verificeer isolatie
+- [ ] Parent + student (zelfde kind) → beide zien oefendata
 
 ---
 
-## NOTES
+## Openstaande Taken (Bugfixes & Verbeteringen)
 
-### Potential Blockers
-1. `profiles.family_id NOT NULL` → must carefully test RLS with NULL values
-2. `handle_new_user` trigger → may need modification to skip family creation for teachers
-3. Existing RLS policies → some may need modification to handle NULL family_id
+### Must Fix
+- [ ] **Migration 013 toepassen** — voeg 'student' toe aan user_role ENUM
+  ```sql
+  ALTER TYPE user_role ADD VALUE 'student';
+  ```
+  (Kan via Supabase dashboard: SQL Editor)
 
-### Resources
-- Migration examples: `/supabase/migrations/001-008.sql`
-- Existing auth patterns: `/src/lib/actions/auth.ts` (addChild, loginChild)
-- Existing routes: `/src/app/[locale]/(parent)/` structure
-- i18n example: `messages/nl.json`, `messages/en.json`
+### Nice to Have
+- [ ] Uitlog-bevestiging toevoegen (modal "Weet je zeker dat je wilt uitloggen?")
+- [ ] Betere error handling bij server-side logout failures
+- [ ] Teacher module: student kan niveau/les aanpassen
+- [ ] Admin panel: gebruikersbeheer verfijnen
 
-### Queries to Test
-```sql
--- Check nullable family_id doesn't break queries
-SELECT * FROM practice_sessions
-WHERE family_id = (SELECT family_id FROM profiles WHERE id = $1)
-  OR family_id IS NULL;  -- FIX: use explicit NULL check if needed
+---
 
--- Check teacher can see student data
-SELECT ps.* FROM practice_sessions ps
-WHERE ps.child_id IN (
-  SELECT ts.student_id FROM teacher_students ts
-  WHERE ts.studio_id IN (SELECT id FROM studios WHERE owner_id = auth.uid())
-);
-```
+## Bekende Bugs (Opgelost)
+
+| Bug | Commit | Beschrijving |
+|-----|--------|--------------|
+| Kindmodus hangt | b6d74fd | Browser Lock Manager timeout → server-side logout |
+| Uitloggen hangt | b6d74fd | Zelfde root cause, zelfde fix |
+| Practice reset 15m | 8d3c1df | getTodayPracticeSeconds() op mount |
+| Terug naar ouder hangt | b6d74fd | Zelfde root cause als kindmodus |
+| URL encoding redirect | b6d74fd | encodeURIComponent voor ?tab=child param |
+
+> Zie **KNOWN_ISSUES.md** voor volledige details per bug.
 
 ---
 
 ## Progress Tracking
 
-### Completed
-- [x] Codebase exploration
-- [x] Architecture design & decisions
-- [x] Implementation plan documented
-- [x] TODO created
+### Voltooid
+- [x] Codebase verkenning
+- [x] Architectuur design & beslissingen
+- [x] Implementatieplan gedocumenteerd
 - [x] Phase 1: Database (migrations, RLS, RPC functions)
-- [x] Phase 2: Authentication (teacher/student registration, login flows)
+- [x] Phase 2: Authentication (teacher/student registratie, login flows)
 - [x] Phase 3: Teacher UI (dashboard, students, courses, settings)
-- [x] Phase 4: Login Updates (3-tab system, StudentLoginForm)
-- [x] Phase 5: Parent Child Mode Switch (Kindmodus button, localStorage)
+- [x] Phase 4: Login Updates (3-tab systeem, StudentLoginForm)
+- [x] Phase 5: Parent Child Mode Switch (Kindmodus knop, localStorage)
 - [x] Phase 6: Nullable family_id Support (startPracticeSession, messages)
+- [x] Bugfix: Auth logout/kindmodus (server-side route)
+- [x] Bugfix: Practice tijd tracking (cumulatieve loading)
 
 ### In Progress
-- [ ] Phase 7: Comprehensive Testing
+- [ ] Phase 7: Volledig testen van teacher module
+- [ ] Migration 013 toepassen op productie
 
-### Not Started
-- [ ] Phases beyond 7
-
-### Current Status
-Ready to begin Phase 7 (Testing)
+### Nog te doen
+- [ ] Verdere iteraties op basis van gebruikers feedback
 
 ---
 
-## Quick Start for Next Session
+## Quick Start voor Volgende Sessie
 
-1. Open `IMPLEMENTATION_PLAN.md` for full context
-2. Find the current phase in this TODO
-3. Check off boxes as you complete tasks
-4. If blocked, refer to "Potential Blockers" section above
-5. Test each phase before moving to next
+1. Lees **KNOWN_ISSUES.md** — weet wat NIET te doen bij auth
+2. Check **CLAUDE.md** — kritische technische kennis
+3. Begin met Migration 013 (student role enum)
+4. Ga dan door met Phase 7 tests (teacher module)
+5. Test elke phase voor je verder gaat
 
-**Estimated completion:** 5-7 days of focused work
+**Productie URL:** https://practicehero.vercel.app
+**Local dev:** `npm run dev` → localhost:3000
