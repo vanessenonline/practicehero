@@ -343,3 +343,48 @@ export async function getPracticeContent(
 
   return { lesson, motivator };
 }
+
+// ---------------------------------------------------------------------------
+// Get today's cumulative practice time
+// ---------------------------------------------------------------------------
+
+/**
+ * Get the total number of seconds the current child has practiced today.
+ * Sums up duration_seconds from all completed practice_sessions for today.
+ * Used to restore cumulative practice time when child re-enters practice mode.
+ */
+export async function getTodayPracticeSeconds(): Promise<number> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return 0;
+
+  const today = new Date();
+  const startOfDay = new Date(today);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(today);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const { data: sessions, error } = await supabase
+    .from("practice_sessions")
+    .select("duration_seconds")
+    .eq("child_id", user.id)
+    .eq("status", "completed")
+    .gte("started_at", startOfDay.toISOString())
+    .lte("started_at", endOfDay.toISOString());
+
+  if (error) {
+    console.error("Error fetching today's practice sessions:", error);
+    return 0;
+  }
+
+  // Sum all duration_seconds (null-safe)
+  const totalSeconds = (sessions ?? []).reduce((sum, session) => {
+    return sum + (session.duration_seconds ?? 0);
+  }, 0);
+
+  return totalSeconds;
+}

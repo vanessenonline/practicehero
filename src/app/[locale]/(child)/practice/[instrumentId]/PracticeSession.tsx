@@ -24,7 +24,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { startPracticeSession, completePracticeSession } from "@/lib/actions/practice";
+import { startPracticeSession, completePracticeSession, getTodayPracticeSeconds } from "@/lib/actions/practice";
 import type { Instrument, PracticeContent } from "@/types/database";
 import type { AudioClassification } from "@/types";
 import { formatTime } from "@/lib/utils/date";
@@ -323,6 +323,18 @@ export function PracticeSession({
   };
   const gradientClass =
     instColors[instrument.name_key] ?? "from-orange-500 to-orange-600";
+
+  // -------------------------------------------------------------------------
+  // Load today's cumulative practice time on mount
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    const loadTodayPracticeTime = async () => {
+      const todaySeconds = await getTodayPracticeSeconds();
+      setCumulativePriorSeconds(todaySeconds);
+      console.log(`📊 Loaded today's practice time: ${todaySeconds}s (${Math.round(todaySeconds / 60)}m)`);
+    };
+    loadTodayPracticeTime();
+  }, []); // Run once on mount
 
   // -------------------------------------------------------------------------
   // Timer tick
