@@ -32,8 +32,17 @@ export function ParentNav() {
   async function handleLogout() {
     try {
       console.log('🔓 Logging out...');
-      await signOut();
-      console.log('✅ Signed out from Supabase');
+      try {
+        // Use a timeout to handle potential Lock Manager hanging
+        const signOutPromise = signOut();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('SignOut timeout')), 5000)
+        );
+        await Promise.race([signOutPromise, timeoutPromise]);
+        console.log('✅ Signed out from Supabase');
+      } catch (signOutError) {
+        console.warn('⚠️  SignOut failed or timed out, proceeding with logout anyway:', signOutError);
+      }
 
       // Clear any local storage related to session
       try {
@@ -48,8 +57,13 @@ export function ParentNav() {
       router.refresh();
     } catch (error) {
       console.error('❌ Logout error:', error);
-      // Force redirect even if signOut failed
-      router.push(`/${locale}/login`);
+      // Force redirect using window.location as fallback
+      try {
+        router.push(`/${locale}/login`);
+      } catch {
+        // Last resort: hard redirect
+        window.location.href = `/${locale}/login`;
+      }
     }
   }
 
@@ -67,16 +81,30 @@ export function ParentNav() {
 
       // Sign out and redirect to login with child tab
       console.log('🔓 Signing out...');
-      await signOut();
-      console.log('✅ Signed out');
+      try {
+        // Use a timeout to handle potential Lock Manager hanging
+        const signOutPromise = signOut();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('SignOut timeout')), 5000)
+        );
+        await Promise.race([signOutPromise, timeoutPromise]);
+        console.log('✅ Signed out');
+      } catch (signOutError) {
+        console.warn('⚠️  SignOut failed or timed out, forcing redirect anyway:', signOutError);
+      }
 
       console.log(`📍 Redirecting to login...`);
       router.push(`/${locale}/login?tab=child`);
       router.refresh();
     } catch (error) {
       console.error('❌ Child mode error:', error);
-      // Fallback redirect
-      router.push(`/${locale}/login?tab=child`);
+      // Force redirect using window.location as fallback
+      try {
+        router.push(`/${locale}/login?tab=child`);
+      } catch {
+        // Last resort: hard redirect
+        window.location.href = `/${locale}/login?tab=child`;
+      }
     }
   }
 
