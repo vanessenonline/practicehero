@@ -25,7 +25,9 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { startPracticeSession, completePracticeSession, getTodayPracticeSeconds } from "@/lib/actions/practice";
+import { advanceStudentLesson } from "@/lib/actions/teacher";
 import type { Instrument, PracticeContent } from "@/types/database";
+import type { LessonContent } from "@/types/lesson";
 import type { AudioClassification } from "@/types";
 import { formatTime } from "@/lib/utils/date";
 import {
@@ -90,12 +92,14 @@ function extractSpotifyPath(url: string | null): string | null {
 
 /**
  * Lesson card with optional collapsible YouTube video embed.
+ * Accepts both parent-created practice_content and teacher course_lesson
+ * via the normalised LessonContent type.
  */
 function LessonCard({
   lesson,
   t,
 }: {
-  lesson: PracticeContent;
+  lesson: LessonContent;
   t: ReturnType<typeof useTranslations>;
 }) {
   const [videoOpen, setVideoOpen] = useState(false);
@@ -104,9 +108,22 @@ function LessonCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-muted-foreground">
-          📖 {t("practice.currentLesson")}
-        </CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-sm text-muted-foreground">
+            📖 {t("practice.currentLesson")}
+          </CardTitle>
+          {/* Show level/lesson badge for course lessons */}
+          {lesson.source === "course_lesson" &&
+            lesson.level_number !== undefined &&
+            lesson.lesson_number !== undefined && (
+              <Badge
+                variant="outline"
+                className="shrink-0 text-xs text-purple-600 border-purple-300"
+              >
+                Niv. {lesson.level_number} — Les {lesson.lesson_number}
+              </Badge>
+            )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="font-medium">{lesson.title}</p>
@@ -116,15 +133,15 @@ function LessonCard({
           </p>
         )}
 
-        {/* Repeat badge */}
+        {/* Repeat badge (practice_content only) */}
         {lesson.is_repeat && (
           <Badge variant="secondary" className="text-xs">
             🔄 {t("practice.repeatChallenge")}
           </Badge>
         )}
 
-        {/* Bonus points badge */}
-        {lesson.bonus_points > 0 && (
+        {/* Bonus points badge (practice_content only) */}
+        {(lesson.bonus_points ?? 0) > 0 && (
           <Badge variant="secondary" className="ml-1 text-xs bg-amber-100 text-amber-700">
             +{lesson.bonus_points} {t("practice.bonusAvailable")}
           </Badge>
@@ -241,8 +258,16 @@ interface PracticeSessionProps {
   instrument: Instrument;
   locale: string;
   childName: string;
-  lesson: PracticeContent | null;
+  /** Normalised lesson content — from parent practice_content or teacher course_lesson. */
+  lesson: LessonContent | null;
   motivator: PracticeContent | null;
+  /**
+   * teacher_students.id for the current student relationship.
+   * Present only for teacher-managed students viewing a course lesson.
+   * When set, a "Les afgerond!" button is shown after a successful session
+   * so the student can advance to the next lesson.
+   */
+  studentTsId?: string;
 }
 
 type Phase = "idle" | "running" | "paused" | "summary";
@@ -258,6 +283,7 @@ export function PracticeSession({
   childName,
   lesson,
   motivator,
+  studentTsId,
 }: PracticeSessionProps) {
   const t = useTranslations();
   const router = useRouter();
@@ -278,6 +304,11 @@ export function PracticeSession({
     totalPoints: number;
     superCreditsEarned: number;
   } | null>(null);
+
+  // Lesson advancement state (student course flow)
+  const [lessonAdvanced, setLessonAdvanced] = useState<
+    "idle" | "pending" | "done" | "completed"
+  >("idle");
 
   // Audio detection state (Tier 2: instrument classification)
   const [audioClassification, setAudioClassification] = useState<AudioClassification>({
@@ -574,6 +605,48 @@ export function PracticeSession({
               Bezig met opslaan...
             </CardContent>
           </Card>
+        )}
+
+        {/* "Les afgerond!" button — only for students with a course lesson */}
+        {goalReached && studentTsId && lesson?.source === "course_lesson" && (
+          <div className="mt-2">
+            {lessonAdvanced === "idle" && (
+              <Button
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                size="lg"
+                onClick={async () => {
+                  setLessonAdvanced("pending");
+                  const result = await advanceStudentLesson(studentTsId);
+                  if (result.completed) {
+                    setLessonAdvanced("completed");
+                  } else {
+                    setLessonAdvanced("done");
+                  }
+                }}
+              >
+                ✓ Les afgerond!
+              </Button>
+            )}
+            {lessonAdvanced === "pending" && (
+              <p className="text-center text-sm text-muted-foreground">
+                Voortgang opslaan…
+              </p>
+            )}
+            {lessonAdvanced === "done" && (
+              <div className="rounded-lg border border-purple-200 bg-purple-50 p-3 text-center">
+                <p className="text-sm font-semibold text-purple-700">
+                  🎉 Volgende les ontgrendeld!
+                </p>
+              </div>
+            )}
+            {lessonAdvanced === "completed" && (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-center">
+                <p className="text-sm font-semibold text-green-700">
+                  🏆 Cursus voltooid! Geweldig gedaan!
+                </p>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Actions */}

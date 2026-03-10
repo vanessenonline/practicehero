@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Flame, MessageCircle, UserPlus, Music } from "lucide-react";
+import { Flame, MessageCircle, UserPlus, Music, BookOpen } from "lucide-react";
 import { getFamilyOverview } from "@/lib/actions/family";
 
 /**
@@ -86,7 +86,7 @@ export default async function DashboardPage({
       {/* Children grid */}
       {children.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {children.map(({ profile, instruments, streak, practicedToday, weeklyMinutes }) => (
+          {children.map(({ profile, instruments, streak, practicedToday, weeklyMinutes, courseProgress }) => (
             <Card key={profile.id} className="overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -128,6 +128,25 @@ export default async function DashboardPage({
                       : t("parent.dashboard.notYet")}
                   </Badge>
                 </div>
+
+                {/* Course progress (when child is enrolled via a teacher) */}
+                {courseProgress && (
+                  <div className="flex items-start gap-2 rounded-lg border border-purple-200 bg-purple-50 p-2.5">
+                    <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-purple-700 truncate">
+                        {courseProgress.courseName}
+                      </p>
+                      <p className="text-[11px] text-purple-600/70">
+                        Niveau {courseProgress.currentLevel} — Les{" "}
+                        {courseProgress.currentLesson}
+                        {courseProgress.lessonTitle && (
+                          <>: {courseProgress.lessonTitle}</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Weekly progress bars */}
                 <div>

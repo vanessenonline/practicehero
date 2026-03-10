@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   MessageCircle,
@@ -11,10 +10,13 @@ import {
   Send,
   Loader2,
   Lock,
+  GraduationCap,
 } from "lucide-react";
 import { sendMessage } from "@/lib/actions/messages";
+import { sendStudioMessage } from "@/lib/actions/studio-messages";
+import type { StudioMessage } from "@/types/database";
 
-interface Message {
+interface FamilyMessage {
   id: string;
   content: string;
   is_read: boolean;
@@ -24,62 +26,102 @@ interface Message {
 }
 
 interface ChildMessagesClientProps {
-  messages: Message[];
+  messages: FamilyMessage[];
   childId: string;
   parentId: string | null;
   canSend: boolean;
+  /** When true, shows teacher conversation instead of parent conversation */
+  teacherMode?: boolean;
+  /** Display name of the teacher (for teacher mode) */
+  teacherName?: string;
+  /** Teacher user ID (for teacher mode sends) */
+  teacherId?: string;
+  /** Studio messages to display in teacher mode */
+  studioMessages?: StudioMessage[];
 }
 
 /**
- * Client component for child messages with optional compose functionality.
- * Shows a chat-style thread and, if enabled, a compose area at the bottom.
+ * Client component for child messages.
+ * Supports two modes:
+ * - Default: family messaging with parent (family children)
+ * - teacherMode: studio messaging with teacher (teacher-students)
  */
 export function ChildMessagesClient({
-  messages: initialMessages,
+  messages: initialFamilyMessages,
   childId,
   parentId,
   canSend,
+  teacherMode = false,
+  teacherName = "Leraar",
+  teacherId,
+  studioMessages: initialStudioMessages = [],
 }: ChildMessagesClientProps) {
   const t = useTranslations();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [messages, setMessages] = useState(initialMessages);
+  // Family mode state
+  const [familyMessages, setFamilyMessages] = useState(initialFamilyMessages);
+  // Teacher mode state
+  const [studioMessages, setStudioMessages] = useState(initialStudioMessages);
+
   const [newMessage, setNewMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Unified message list for rendering
+  const displayMessages = teacherMode ? studioMessages : familyMessages;
 
   // Scroll to bottom on load and when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [displayMessages]);
 
   function handleSend() {
-    if (!newMessage.trim() || !parentId || isPending) return;
+    if (!newMessage.trim() || isPending) return;
+    if (!teacherMode && !parentId) return;
+    if (teacherMode && !teacherId) return;
 
     setError(null);
+    const content = newMessage.trim();
+    setNewMessage("");
 
     startTransition(async () => {
-      const result = await sendMessage(parentId, newMessage.trim());
+      let result: { success?: boolean; error?: string };
+
+      if (teacherMode && teacherId) {
+        result = await sendStudioMessage(teacherId, content);
+      } else if (parentId) {
+        result = await sendMessage(parentId, content);
+      } else {
+        return;
+      }
 
       if (result.error) {
         setError(result.error);
+        setNewMessage(content); // Restore on error
       } else {
-        // Optimistically add the message
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `temp-${Date.now()}`,
-            content: newMessage.trim(),
-            is_read: false,
-            created_at: new Date().toISOString(),
-            sender_id: childId,
-            recipient_id: parentId,
-          },
-        ]);
-        setNewMessage("");
+        // Optimistic update
+        const optimisticBase = {
+          id: `temp-${Date.now()}`,
+          content,
+          is_read: false,
+          created_at: new Date().toISOString(),
+          sender_id: childId,
+          recipient_id: teacherMode ? (teacherId ?? "") : (parentId ?? ""),
+        };
+
+        if (teacherMode) {
+          setStudioMessages((prev) => [
+            ...prev,
+            { ...optimisticBase, studio_id: "" },
+          ]);
+        } else {
+          setFamilyMessages((prev) => [...prev, optimisticBase]);
+        }
+
         router.refresh();
       }
     });
@@ -100,7 +142,7 @@ export function ChildMessagesClient({
 
     if (diffMin < 1) return "Zojuist";
     if (diffMin < 60)
-      return `${diffMin} minuut${diffMin !== 1 ? "en" : ""} geleden`;
+      return `${diffMin} ${diffMin === 1 ? "minuut" : "minuten"} geleden`;
     if (diffHours < 24) return `${diffHours} uur geleden`;
     if (diffDays === 1) return "Gisteren";
     if (diffDays < 7) return `${diffDays} dagen geleden`;
@@ -110,27 +152,38 @@ export function ChildMessagesClient({
     });
   }
 
+  // Determine if sending is possible
+  const canActuallySend = canSend && (teacherMode ? !!teacherId : !!parentId);
+
   return (
     <div className="flex h-full flex-col space-y-4">
       {/* Header */}
       <div className="py-2 text-center">
         <h1 className="text-2xl font-bold">{t("messages.title")}</h1>
-        {messages.length > 0 && (
+        {displayMessages.length > 0 && (
           <p className="text-sm text-muted-foreground">
-            {canSend ? "Chat met je ouder" : "Berichten van je ouder"}
+            {teacherMode
+              ? `Chat met ${teacherName}`
+              : canSend
+                ? "Chat met je ouder"
+                : "Berichten van je ouder"}
           </p>
         )}
       </div>
 
       {/* Empty state */}
-      {messages.length === 0 ? (
+      {displayMessages.length === 0 ? (
         <div className="flex-1 py-12 text-center text-muted-foreground">
           <MessageCircle className="mx-auto mb-3 h-12 w-12 opacity-30" />
           <p>{t("messages.noMessages")}</p>
           <p className="mt-1 text-xs">
-            {canSend
-              ? "Stuur je ouder een bericht!"
-              : "Je ouder kan je hier berichten sturen!"}
+            {teacherMode
+              ? canSend
+                ? `Stuur ${teacherName} een bericht!`
+                : `${teacherName} kan je hier berichten sturen!`
+              : canSend
+                ? "Stuur je ouder een bericht!"
+                : "Je ouder kan je hier berichten sturen!"}
           </p>
         </div>
       ) : (
@@ -138,13 +191,23 @@ export function ChildMessagesClient({
         <div
           ref={scrollRef}
           className="flex-1 space-y-2 overflow-y-auto"
-          style={{ maxHeight: canSend ? "calc(100vh - 320px)" : "calc(100vh - 240px)" }}
+          style={{
+            maxHeight: canActuallySend
+              ? "calc(100vh - 320px)"
+              : "calc(100vh - 240px)",
+          }}
         >
-          {messages.map((message) => {
+          {displayMessages.map((message) => {
             const isFromChild = message.sender_id === childId;
 
+            // Icon for received messages differs per mode
+            const ReceivedIcon = teacherMode ? GraduationCap : Heart;
+            const receivedIconClass = teacherMode
+              ? "bg-blue-100 text-blue-600"
+              : "bg-pink-100 text-pink-500";
+
             return isFromChild ? (
-              /* Child's sent message - right aligned */
+              /* Child's sent message – right aligned */
               <div key={message.id} className="flex justify-end">
                 <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-orange-500 px-4 py-2.5 text-white">
                   <p className="text-sm">{message.content}</p>
@@ -154,10 +217,12 @@ export function ChildMessagesClient({
                 </div>
               </div>
             ) : (
-              /* Parent's received message - left aligned */
+              /* Parent's / teacher's received message – left aligned */
               <div key={message.id} className="flex gap-2">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pink-100 text-pink-500">
-                  <Heart className="h-4 w-4" />
+                <div
+                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${receivedIconClass}`}
+                >
+                  <ReceivedIcon className="h-4 w-4" />
                 </div>
                 <div className="max-w-[80%] rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5">
                   <p className="text-sm">{message.content}</p>
@@ -171,8 +236,8 @@ export function ChildMessagesClient({
         </div>
       )}
 
-      {/* Compose area (if enabled) */}
-      {canSend && parentId ? (
+      {/* Compose area (if sending is enabled) */}
+      {canActuallySend ? (
         <div className="space-y-2 border-t pt-3">
           {error && (
             <p className="text-center text-xs text-destructive">{error}</p>

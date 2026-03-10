@@ -39,7 +39,7 @@ export default async function CoursesPage({
         <div>
           <h1 className="text-2xl font-bold">{t("nav.teacher.courses")}</h1>
           <p className="text-sm text-muted-foreground">
-            {courses.length} {courses.length === 1 ? "gelijkreeks" : "gelijkreeksen"}
+            {courses.length} {courses.length === 1 ? "cursus" : "cursussen"}
           </p>
         </div>
         <Button asChild size="sm">

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   Profile,
   Instrument,
@@ -13,6 +14,14 @@ import type {
 // Types for aggregated data
 // ---------------------------------------------------------------------------
 
+/** Course progress info when a child is also a teacher-managed student. */
+export interface CourseProgress {
+  courseName: string;
+  currentLevel: number;
+  currentLesson: number;
+  lessonTitle: string | null;
+}
+
 export interface ChildOverview {
   profile: Profile;
   instruments: (ChildInstrument & { instrument: Instrument })[];
@@ -21,6 +30,8 @@ export interface ChildOverview {
   /** Minutes practiced per day this week (Mon-Sun), 0 if none. */
   weeklyMinutes: number[];
   totalPoints: number;
+  /** Non-null when the child is enrolled in a teacher-assigned course. */
+  courseProgress: CourseProgress | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -30,14 +41,19 @@ export interface ChildOverview {
 /**
  * Fetch all children in the logged-in parent's family,
  * together with their instruments, streaks, and this week's practice data.
+ *
+ * Uses the admin client for all database queries to work around the ES256
+ * JWT / PostgREST HS256 mismatch that causes RLS to silently filter all rows.
+ * Security is enforced by filtering on family_id derived from the verified
+ * user session (auth.getUser() calls the Auth API, not PostgREST).
  */
 export async function getFamilyOverview(): Promise<{
   familyName: string;
   children: ChildOverview[];
   error?: string;
 }> {
+  // Auth API call — uses JWT verification endpoint, not PostgREST, so ES256 works.
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -46,8 +62,11 @@ export async function getFamilyOverview(): Promise<{
     return { familyName: "", children: [], error: "Not authenticated" };
   }
 
+  // All database queries use admin client (bypasses RLS) with explicit user filters.
+  const admin = createAdminClient();
+
   // Get the parent's profile to find the family_id
-  const { data: parentProfile } = await supabase
+  const { data: parentProfile } = await admin
     .from("profiles")
     .select("*")
     .eq("id", user.id)
@@ -60,14 +79,14 @@ export async function getFamilyOverview(): Promise<{
   const familyId = parentProfile.family_id;
 
   // Get family name
-  const { data: family } = await supabase
+  const { data: family } = await admin
     .from("families")
     .select("name")
     .eq("id", familyId)
     .single();
 
   // Get all child profiles in this family
-  const { data: childProfiles } = await supabase
+  const { data: childProfiles } = await admin
     .from("profiles")
     .select("*")
     .eq("family_id", familyId)
@@ -79,19 +98,19 @@ export async function getFamilyOverview(): Promise<{
   }
 
   // Get all instruments (reference table)
-  const { data: allInstruments } = await supabase
+  const { data: allInstruments } = await admin
     .from("instruments")
     .select("*");
 
   // Get child_instruments for all children in one query
   const childIds = childProfiles.map((c) => c.id);
-  const { data: childInstruments } = await supabase
+  const { data: childInstruments } = await admin
     .from("child_instruments")
     .select("*")
     .in("child_id", childIds);
 
   // Get streaks for all children
-  const { data: streaks } = await supabase
+  const { data: streaks } = await admin
     .from("streaks")
     .select("*")
     .in("child_id", childIds);
@@ -108,8 +127,8 @@ export async function getFamilyOverview(): Promise<{
   sundayEnd.setDate(monday.getDate() + 6);
   sundayEnd.setHours(23, 59, 59, 999);
 
-  // Get practice sessions for this week
-  const { data: sessions } = await supabase
+  // Get practice sessions for this week (scoped to this family)
+  const { data: sessions } = await admin
     .from("practice_sessions")
     .select("*")
     .eq("family_id", familyId)
@@ -117,11 +136,63 @@ export async function getFamilyOverview(): Promise<{
     .lte("started_at", sundayEnd.toISOString())
     .eq("status", "completed");
 
-  // Get total points for each child
-  const { data: pointEntries } = await supabase
+  // Get total points for each child (scoped to family members)
+  const { data: pointEntries } = await admin
     .from("points")
     .select("child_id, amount")
     .in("child_id", childIds);
+
+  // Get teacher_students rows for children who are also teacher-managed students
+  const { data: teacherStudentRows } = await admin
+    .from("teacher_students")
+    .select("student_id, course_id, current_level, current_lesson")
+    .in("student_id", childIds)
+    .eq("is_active", true);
+
+  // Fetch course names + lesson titles for enrolled students
+  const tsCourseIds = (teacherStudentRows ?? [])
+    .map((ts) => ts.course_id)
+    .filter((id): id is string => id !== null);
+
+  const [tsCoursesResult, tsLessonsResult] = await Promise.all([
+    tsCourseIds.length > 0
+      ? admin.from("courses").select("id, name").in("id", tsCourseIds)
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    tsCourseIds.length > 0
+      ? admin
+          .from("course_lessons")
+          .select("course_id, level_number, lesson_number, title")
+          .in("course_id", tsCourseIds)
+      : Promise.resolve(
+          { data: [] as { course_id: string; level_number: number; lesson_number: number; title: string }[] }
+        ),
+  ]);
+
+  const tsCourseMap = new Map(
+    (tsCoursesResult.data ?? []).map((c) => [c.id, c.name])
+  );
+  const tsLessonTitleMap = new Map(
+    (tsLessonsResult.data ?? []).map((l) => [
+      `${l.course_id}:${l.level_number}:${l.lesson_number}`,
+      l.title,
+    ])
+  );
+
+  // Build lookup: child_id → CourseProgress
+  const courseProgressMap = new Map<string, CourseProgress>();
+  for (const ts of teacherStudentRows ?? []) {
+    if (ts.course_id && tsCourseMap.has(ts.course_id)) {
+      courseProgressMap.set(ts.student_id, {
+        courseName: tsCourseMap.get(ts.course_id)!,
+        currentLevel: ts.current_level,
+        currentLesson: ts.current_lesson,
+        lessonTitle:
+          tsLessonTitleMap.get(
+            `${ts.course_id}:${ts.current_level}:${ts.current_lesson}`
+          ) ?? null,
+      });
+    }
+  }
 
   // Build the overview for each child
   const children: ChildOverview[] = childProfiles.map((profile) => {
@@ -174,6 +245,7 @@ export async function getFamilyOverview(): Promise<{
       practicedToday,
       weeklyMinutes,
       totalPoints,
+      courseProgress: courseProgressMap.get(profile.id) ?? null,
     };
   });
 
@@ -191,8 +263,8 @@ export async function getFamilyOverview(): Promise<{
  * Fetch all available instruments from the database.
  */
 export async function getInstruments(): Promise<Instrument[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("instruments")
     .select("*")
     .order("created_at");
@@ -211,13 +283,15 @@ export interface ChildWithInstruments {
 
 /**
  * Fetch children with their linked instruments.
+ *
+ * Uses the admin client to work around the ES256 JWT / PostgREST RLS issue.
+ * Security is enforced via family_id scoping from the verified parent session.
  */
 export async function getChildren(): Promise<{
   children: ChildWithInstruments[];
   error?: string;
 }> {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -226,7 +300,9 @@ export async function getChildren(): Promise<{
     return { children: [], error: "Not authenticated" };
   }
 
-  const { data: parentProfile } = await supabase
+  const admin = createAdminClient();
+
+  const { data: parentProfile } = await admin
     .from("profiles")
     .select("*")
     .eq("id", user.id)
@@ -238,7 +314,7 @@ export async function getChildren(): Promise<{
 
   const familyId = parentProfile.family_id;
 
-  const { data: childProfiles } = await supabase
+  const { data: childProfiles } = await admin
     .from("profiles")
     .select("*")
     .eq("family_id", familyId)
@@ -251,16 +327,16 @@ export async function getChildren(): Promise<{
 
   const childIds = childProfiles.map((c) => c.id);
 
-  const { data: allInstruments } = await supabase
+  const { data: allInstruments } = await admin
     .from("instruments")
     .select("*");
 
-  const { data: childInstruments } = await supabase
+  const { data: childInstruments } = await admin
     .from("child_instruments")
     .select("*")
     .in("child_id", childIds);
 
-  const { data: streaks } = await supabase
+  const { data: streaks } = await admin
     .from("streaks")
     .select("*")
     .in("child_id", childIds);

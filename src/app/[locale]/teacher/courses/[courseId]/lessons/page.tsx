@@ -3,8 +3,9 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, Plus } from "lucide-react";
 import { getCourseDetail } from "@/lib/actions/teacher";
+import { DeleteLessonButton } from "./DeleteLessonButton";
 
 /**
  * Lessons management page – add, edit, and delete lessons for a course.
@@ -30,7 +31,7 @@ export default async function LessonsPage({
           </Link>
         </Button>
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-          {error || "Gelijkreeks niet gevonden"}
+          {error || "Cursus niet gevonden"}
         </div>
       </div>
     );
@@ -135,13 +136,10 @@ export default async function LessonsPage({
                                   ✎
                                 </Link>
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                              <DeleteLessonButton
+                                lessonId={lessonData.id}
+                                lessonTitle={lessonData.title || "Les"}
+                              />
                             </div>
                           </div>
                         ) : (

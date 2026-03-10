@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Profile } from "@/types/database";
 
+// NOTE: All database queries in this file use the admin client to work around
+// the ES256 JWT / PostgREST HS256 mismatch that causes RLS to silently filter
+// all rows. Security is enforced by filtering on user.id from auth.getUser()
+// (which calls the Auth API endpoint directly, not PostgREST).
+
 // ---------------------------------------------------------------------------
 // Parent registration
 // ---------------------------------------------------------------------------
@@ -154,7 +159,9 @@ export async function getCurrentProfile(): Promise<Profile | null> {
 
   if (!user) return null;
 
-  const { data: profile } = await supabase
+  // Use admin client to bypass RLS (ES256 JWT / PostgREST HS256 mismatch).
+  const admin = createAdminClient();
+  const { data: profile } = await admin
     .from("profiles")
     .select("*")
     .eq("id", user.id)
@@ -196,7 +203,10 @@ export async function addChild(
     return { error: "Niet ingelogd." };
   }
 
-  const { data: parentProfile } = await supabase
+  // Use admin client to bypass RLS (ES256 JWT / PostgREST HS256 mismatch).
+  const admin = createAdminClient();
+
+  const { data: parentProfile } = await admin
     .from("profiles")
     .select("*")
     .eq("id", user.id)
@@ -211,7 +221,6 @@ export async function addChild(
   }
 
   // Create the child's Supabase Auth user via admin API
-  const admin = createAdminClient();
   const childEmail = `child-${crypto.randomUUID().slice(0, 8)}@practicehero.local`;
 
   const { data: newUser, error: createError } =
@@ -276,46 +285,130 @@ export async function getFamilyChildren(
 }
 
 // ---------------------------------------------------------------------------
-// Teacher registration
+// Teacher registration (atomic: profile + studio in one operation)
 // ---------------------------------------------------------------------------
 
+interface RegisterTeacherResult {
+  success?: boolean;
+  needsConfirmation?: boolean;
+  teacherCode?: string;
+  error?: string;
+}
+
 /**
- * Register a new teacher account.
- * The database trigger `handle_new_user` should be updated to handle teacher role,
- * or we create the studio in a follow-up action via createStudio().
+ * Register a new teacher account and create their studio atomically.
+ *
+ * Unlike parent registration, teachers need a studio record created immediately
+ * (to generate a teacher_code). We use the admin client for studio creation so
+ * this works even when email confirmation is pending (no active session).
+ *
+ * Flow:
+ * 1. Create auth user via signUp() — DB trigger creates profile automatically
+ * 2. Ensure profile exists as a fallback (in case trigger didn't run in prod)
+ * 3. Generate unique teacher_code via RPC
+ * 4. Create studio via admin client (bypasses RLS — no active session needed)
+ * 5. Return { success, teacherCode, needsConfirmation }
  */
 export async function registerTeacher(
   email: string,
   password: string,
   studioName: string
-): Promise<RegisterResult> {
-  const supabase = await createClient();
+): Promise<RegisterTeacherResult> {
+  try {
+    const supabase = await createClient();
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
+    // Step 1: Create auth user (DB trigger handle_new_user creates the profile)
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          role: "teacher",
+          display_name: studioName,
+          studio_name: studioName,
+        },
+      },
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    if (!data.user) {
+      return { error: "Registratie mislukt — geen gebruiker aangemaakt." };
+    }
+
+    const userId = data.user.id;
+    console.log(`[registerTeacher] Created user: ${userId} (session: ${!!data.session})`);
+    const admin = createAdminClient();
+
+    // Step 2: Ensure profile exists as a fallback.
+    // The DB trigger (handle_new_user) runs synchronously and should have
+    // created the profile already. We create it manually only if it's missing,
+    // e.g. when migration 010 wasn't applied in production yet.
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!existingProfile) {
+      const { error: profileError } = await admin.from("profiles").insert({
+        id: userId,
+        family_id: null, // Teachers have no family
         role: "teacher",
         display_name: studioName,
-        studio_name: studioName,
-      },
-    },
-  });
+        locale: "nl",
+      });
 
-  if (error) {
-    return { error: error.message };
+      if (profileError) {
+        return {
+          error: "Kan profiel niet aanmaken: " + profileError.message,
+        };
+      }
+    }
+
+    // Step 3: Generate unique teacher_code via RPC
+    const { data: teacherCode, error: codeError } = await admin.rpc(
+      "generate_teacher_code"
+    );
+
+    if (codeError || !teacherCode) {
+      return { error: "Kan docentcode niet genereren." };
+    }
+
+    // Step 4: Create studio using admin client (bypasses RLS, no session needed)
+    const { data: studio, error: studioError } = await admin
+      .from("studios")
+      .insert({
+        owner_id: userId,
+        name: studioName,
+        teacher_code: teacherCode,
+      })
+      .select("id, teacher_code")
+      .single();
+
+    if (studioError) {
+      console.error(`[registerTeacher] Studio insert error for userId ${userId}:`, studioError);
+      return { error: "Kan studio niet aanmaken: " + studioError.message };
+    }
+
+    console.log(`[registerTeacher] Studio created: id=${studio.id}, owner=${userId}, code=${studio.teacher_code}`);
+
+    // Step 5: Return result — needsConfirmation is true when email must be confirmed
+    return {
+      success: true,
+      teacherCode: studio.teacher_code,
+      needsConfirmation: !data.session,
+    };
+  } catch (err) {
+    console.error("registerTeacher error:", err);
+    return { error: "Registratie mislukt — probeer opnieuw." };
   }
-
-  if (data.user && !data.session) {
-    return { success: true, needsConfirmation: true };
-  }
-
-  return { success: true };
 }
 
 // ---------------------------------------------------------------------------
-// Studio creation (after teacher registration)
+// Studio creation (standalone — for use after email confirmation flow)
 // ---------------------------------------------------------------------------
 
 interface CreateStudioResult {
@@ -326,8 +419,11 @@ interface CreateStudioResult {
 }
 
 /**
- * Create a studio for an authenticated teacher.
- * Generates a unique teacher_code via RPC and inserts the studio record.
+ * Create a studio for an already-authenticated teacher.
+ * Used as a standalone action when the teacher is already signed in
+ * (e.g. after completing email confirmation).
+ * For the initial registration flow, use registerTeacher() instead —
+ * it creates the studio atomically without requiring an active session.
  */
 export async function createStudio(
   studioName: string
@@ -395,22 +491,38 @@ export async function loginStudent(
   try {
     const admin = createAdminClient();
 
-    // Look up student by teacher_code + student_code
-    const { data: lookup, error: lookupError } = await admin.rpc(
-      "lookup_student_by_codes",
-      {
-        p_teacher_code: teacherCode,
-        p_student_code: studentCode,
-      }
-    );
+    // Look up student by teacher_code + student_code directly via admin client.
+    // The lookup_student_by_codes() RPC is not reliably in PostgREST's schema
+    // cache, so we implement the same join logic with two queries here.
 
-    if (lookupError || !lookup || lookup.length === 0) {
+    // Step 1: find the studio that has this teacher_code
+    const { data: studio, error: studioError } = await admin
+      .from("studios")
+      .select("id")
+      .eq("teacher_code", teacherCode.toUpperCase())
+      .maybeSingle();
+
+    if (studioError || !studio) {
       return {
         error: "Leerling niet gevonden. Controleer de docent- en leerlingcode.",
       };
     }
 
-    const studentId = lookup[0].student_id;
+    // Step 2: find the teacher_students record for this studio + student_code
+    const { data: tsRecord, error: tsError } = await admin
+      .from("teacher_students")
+      .select("student_id")
+      .eq("studio_id", studio.id)
+      .eq("student_code", studentCode.toUpperCase())
+      .maybeSingle();
+
+    if (tsError || !tsRecord) {
+      return {
+        error: "Leerling niet gevonden. Controleer de docent- en leerlingcode.",
+      };
+    }
+
+    const studentId = tsRecord.student_id;
 
     // Get student's auth email via admin
     const { data: authUser, error: authError } =

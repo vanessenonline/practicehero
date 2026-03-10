@@ -25,7 +25,8 @@
     "teacher": {
       "dashboard": "Dashboard",
       "students": "Leerlingen",
-      "courses": "Gelijkreeksen",
+      "courses": "Cursussen",
+      "messages": "Berichten",
       "settings": "Instellingen"
     }
   },
@@ -173,8 +174,15 @@
     "messages": {
       "title": "Berichten",
       "sendTo": "Stuur naar {name}",
-      "placeholder": "Schrijf een motiverend bericht...",
-      "sent": "Bericht verstuurd!"
+      "placeholder": "Schrijf een bericht...",
+      "sent": "Bericht verstuurd!",
+      "childrenTab": "Kinderen",
+      "teachersTab": "Leraren",
+      "linkTeacher": "Leraar koppelen",
+      "teacherCodePlaceholder": "Leraarcode (bijv. 1QNUY)",
+      "linkSuccess": "Leraar gekoppeld!",
+      "linkError": "Leraarcode niet gevonden",
+      "noTeachers": "Nog niet gekoppeld aan een leraar. Voer de leraarcode in om berichten te sturen."
     }
   },
   "teacher": {
@@ -192,12 +200,23 @@
     "students": {
       "add": "Leerling toevoegen",
       "empty": "Nog geen leerlingen",
-      "emptyHint": "Voeg leerlingen toe om ze te beheren"
+      "emptyHint": "Voeg leerlingen toe om ze te beheren",
+      "messaging": "Berichten versturen",
+      "messagingEnabled": "Leerling mag berichten sturen naar leraar",
+      "messagingDisabled": "Leerling mag geen berichten sturen"
     },
     "courses": {
-      "add": "Gelijkreeks aanmaken",
-      "empty": "Nog geen gelijkreeksen",
-      "emptyHint": "Maak je eerste gelijkreeks aan"
+      "add": "Cursus aanmaken",
+      "empty": "Nog geen cursussen",
+      "emptyHint": "Maak je eerste cursus aan"
+    },
+    "messages": {
+      "title": "Berichten",
+      "noContacts": "Nog geen leerlingen of gekoppelde ouders.",
+      "students": "Leerlingen",
+      "parents": "Ouders",
+      "placeholder": "Schrijf een bericht...",
+      "noMessages": "Nog geen berichten. Stuur het eerste bericht!"
     }
   },
   "settings": {

@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSupabase } from "@/providers/SupabaseProvider";
-import { registerTeacher, createStudio } from "@/lib/actions/auth";
+import { registerTeacher } from "@/lib/actions/auth";
 
 export default function RegisterPage() {
   const t = useTranslations();
@@ -89,10 +89,10 @@ export default function RegisterPage() {
       return;
     }
 
-    // Session exists — user is signed in immediately
+    // Session exists — full page reload so new session cookies are available
+    // for server-side RLS queries on the next request.
     if (data.session) {
-      router.push(`/${locale}/dashboard`);
-      router.refresh();
+      window.location.href = `/${locale}/dashboard`;
     }
   }
 
@@ -120,38 +120,31 @@ export default function RegisterPage() {
       return;
     }
 
-    // Register teacher
-    const registerResult = await registerTeacher(
-      teacherEmail,
-      teacherPassword,
-      studioName
-    );
+    // Register teacher + create studio atomically in one server action.
+    // This avoids the race condition where createStudio() was called before
+    // the needsConfirmation check, causing a "not logged in" error when
+    // email confirmation is required (no active session yet).
+    const result = await registerTeacher(teacherEmail, teacherPassword, studioName);
 
-    if (registerResult.error) {
-      setTeacherError(registerResult.error);
+    if (result.error) {
+      setTeacherError(result.error);
       setTeacherLoading(false);
       return;
     }
 
-    // Create studio
-    const studioResult = await createStudio(studioName);
-
-    if (studioResult.error) {
-      setTeacherError(studioResult.error);
-      setTeacherLoading(false);
-      return;
-    }
-
-    // Check if email confirmation is needed
-    if (registerResult.needsConfirmation) {
+    // Email confirmation required — studio is already created, just show confirmation screen
+    if (result.needsConfirmation) {
       setTeacherNeedsConfirmation(true);
       setTeacherLoading(false);
       return;
     }
 
-    // Success - redirect to teacher dashboard
-    router.push(`/${locale}/teacher/dashboard`);
-    router.refresh();
+    // Success — full page reload to /teacher/dashboard.
+    // Must use window.location.href (not router.push) so the browser processes
+    // the new session cookies from signUp() before the next server request.
+    // router.push() is a client-side navigation that may not include the new
+    // session cookies, causing RLS queries to fail (same pattern as logout).
+    window.location.href = `/${locale}/teacher/dashboard`;
   }
 
   // ── Email confirmation screen ────────────────────────────────────

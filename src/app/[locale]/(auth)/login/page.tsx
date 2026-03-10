@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 import { Music, Drum, Guitar, Piano, Lock, Loader2, User } from "lucide-react";
@@ -39,7 +39,11 @@ export default function LoginPage() {
   const router = useRouter();
   const locale = useLocale();
   const supabase = useSupabase();
-  const searchParams = useSearchParams();
+
+  // Active tab — controlled so we can switch programmatically from URL param.
+  // Initialised to "parent" so server and client render identically (no hydration
+  // mismatch). The useEffect below updates it client-side after mount.
+  const [activeTab, setActiveTab] = useState("parent");
 
   // Parent login state
   const [email, setEmail] = useState("");
@@ -55,35 +59,40 @@ export default function LoginPage() {
   const [childLoading, setChildLoading] = useState(false);
   const [familyId, setFamilyId] = useState<string | null>(null);
 
-  // Get default tab from URL query parameter, or "parent" if not specified
-  const [defaultTab, setDefaultTab] = useState("parent");
-
-  // Load remembered family children on mount and check for tab parameter
+  // On mount: read ?tab= URL param to activate the correct tab, load remembered
+  // children, and clear the child-mode flag when arriving via Kindmodus.
+  //
+  // We read from window.location.search (not useSearchParams) to avoid a
+  // server/client hydration mismatch — the server has no access to URL search
+  // params during SSR, so using useSearchParams would cause React to render
+  // different output on server vs client and trigger a hydration error.
+  //
+  // Because activeTab is initialised to "parent" on both server and client,
+  // React hydrates cleanly. Calling setActiveTab() here is a simple post-hydration
+  // state update, which Radix UI Tabs (controlled mode via `value`) handles fine.
   useEffect(() => {
     try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+
+      if (tabParam === "child" || tabParam === "student") {
+        // Note: we intentionally do NOT clear practicehero_child_mode here.
+        // When arriving via the Kindmodus button, that flag is already set and
+        // must be preserved so ChildNav can show the "Terug naar ouder" button.
+        // The flag is cleared by ChildNav.handleBackToParent() and ParentNav.handleLogout().
+        setActiveTab(tabParam);
+      }
+
+      // Load children from the remembered family so the child-select UI populates
       const stored = localStorage.getItem("practicehero_family_id");
       if (stored) {
         setFamilyId(stored);
         loadChildren(stored);
       }
-
-      // Check for ?tab query parameter
-      const tabParam = searchParams.get("tab");
-      if (tabParam === "child" || tabParam === "student") {
-        setDefaultTab(tabParam);
-        // Clear child mode flag if coming from parent's child mode switch
-        if (tabParam === "child") {
-          try {
-            localStorage.removeItem("practicehero_child_mode");
-          } catch {
-            // localStorage may not be available
-          }
-        }
-      }
     } catch {
-      // localStorage may not be available
+      // localStorage may not be available in all environments
     }
-  }, [searchParams]);
+  }, []);
 
   async function loadChildren(fid: string) {
     const result = await getFamilyChildren(fid);
@@ -150,7 +159,7 @@ export default function LoginPage() {
         </h1>
       </div>
 
-      <Tabs defaultValue={defaultTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="parent">{t("auth.parentLogin")}</TabsTrigger>
           <TabsTrigger value="child">{t("auth.childLogin")}</TabsTrigger>

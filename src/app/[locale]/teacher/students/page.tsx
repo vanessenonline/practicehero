@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Music } from "lucide-react";
+import { UserPlus, Music, Flame, BookOpen, Calendar } from "lucide-react";
 import { getStudents } from "@/lib/actions/teacher";
 
 /**
@@ -77,69 +77,99 @@ export default async function StudentsPage({
       {/* Students grid */}
       {students.length > 0 && (
         <div className="space-y-3">
-          {students.map((student) => (
-            <Card key={student.id} className="overflow-hidden hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
-                  {/* Student info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-semibold truncate">
-                        {student.student_code}
-                      </h3>
-                      {student.is_active ? (
-                        <Badge variant="default" className="bg-green-500">
-                          Actief
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Inactief
-                        </Badge>
-                      )}
+          {students.map((student) => {
+            // Format "last practiced" as relative label
+            const lastPractice = student.last_practice_date
+              ? (() => {
+                  const d = new Date(student.last_practice_date);
+                  const diffMs = Date.now() - d.getTime();
+                  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                  if (diffDays === 0) return "Vandaag";
+                  if (diffDays === 1) return "Gisteren";
+                  if (diffDays < 7) return `${diffDays} dagen geleden`;
+                  return d.toLocaleDateString(locale, {
+                    month: "short",
+                    day: "numeric",
+                  });
+                })()
+              : null;
+
+            return (
+              <Link
+                key={student.id}
+                href={`/${locale}/teacher/students/${student.student_id}`}
+                className="block"
+              >
+                <Card className="overflow-hidden hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      {/* Student info */}
+                      <div className="flex-1 min-w-0 space-y-2">
+                        {/* Name + status row */}
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-semibold truncate">
+                            {student.display_name}
+                          </h3>
+                          {!student.is_active && (
+                            <Badge variant="outline" className="text-muted-foreground">
+                              Inactief
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Course + lesson progress */}
+                        {student.course_name ? (
+                          <div className="flex items-start gap-2 text-sm">
+                            <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" />
+                            <div className="min-w-0">
+                              <p className="font-medium text-purple-700 truncate">
+                                {student.course_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Niveau {student.current_level} — Les{" "}
+                                {student.current_lesson}
+                                {student.current_lesson_title && (
+                                  <span className="text-foreground/70">
+                                    : {student.current_lesson_title}
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground italic">
+                            Geen cursus gekoppeld
+                          </p>
+                        )}
+
+                        {/* Stats row: streak + last practiced */}
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Flame className="h-3.5 w-3.5 text-orange-500" />
+                            <span className="font-medium text-foreground">
+                              {student.streak_count}
+                            </span>{" "}
+                            dag{student.streak_count !== 1 ? "en" : ""}
+                          </span>
+                          {lastPractice && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {lastPractice}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Chevron hint */}
+                      <div className="mt-2 text-muted-foreground">
+                        →
+                      </div>
                     </div>
-
-                    {/* Progress info */}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>
-                        Niveau {student.current_level} • Les{" "}
-                        {student.current_lesson}
-                      </span>
-                      {student.course_id && (
-                        <Badge variant="secondary" className="text-xs">
-                          Gelijkreks
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Date info */}
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Sinds{" "}
-                      {new Date(student.start_date).toLocaleDateString(locale, {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                      {student.target_end_date &&
-                        ` • t/m ${new Date(
-                          student.target_end_date
-                        ).toLocaleDateString(locale, {
-                          month: "short",
-                          day: "numeric",
-                        })}`}
-                    </p>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/${locale}/teacher/students/${student.student_id}`}>
-                        Details
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { ShopItem, Purchase } from "@/types/database";
 
 // ---------------------------------------------------------------------------
@@ -26,19 +27,25 @@ export interface InventoryItem {
  * Purchase a shop item using super credits.
  * Validates the child has enough credits, creates a purchase row,
  * and deducts credits via a negative super_credits entry.
+ *
+ * Uses the admin client for all DB queries to work around the ES256 JWT /
+ * PostgREST HS256 mismatch that causes RLS to silently filter all rows.
+ * Security is enforced by verifying the user via auth.getUser() and scoping
+ * all queries + inserts to user.id.
  */
 export async function purchaseItem(
   shopItemId: string
 ): Promise<PurchaseResult> {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) return { error: "Niet ingelogd." };
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient();
+
+  const { data: profile } = await admin
     .from("profiles")
     .select("family_id, role")
     .eq("id", user.id)
@@ -49,7 +56,7 @@ export async function purchaseItem(
   }
 
   // Get the shop item
-  const { data: item } = await supabase
+  const { data: item } = await admin
     .from("shop_items")
     .select("*")
     .eq("id", shopItemId)
@@ -59,7 +66,7 @@ export async function purchaseItem(
   if (!item) return { error: "Artikel niet gevonden." };
 
   // Calculate current super credit balance
-  const { data: creditEntries } = await supabase
+  const { data: creditEntries } = await admin
     .from("super_credits")
     .select("amount")
     .eq("child_id", user.id);
@@ -70,11 +77,13 @@ export async function purchaseItem(
   );
 
   if (balance < item.cost_credits) {
-    return { error: `Niet genoeg Super Credits. Je hebt ${balance}, je hebt ${item.cost_credits} nodig.` };
+    return {
+      error: `Niet genoeg Super Credits. Je hebt ${balance}, je hebt ${item.cost_credits} nodig.`,
+    };
   }
 
   // Create the purchase record
-  const { error: purchaseError } = await supabase.from("purchases").insert({
+  const { error: purchaseError } = await admin.from("purchases").insert({
     child_id: user.id,
     shop_item_id: shopItemId,
     family_id: profile.family_id,
@@ -86,7 +95,7 @@ export async function purchaseItem(
   }
 
   // Deduct credits (negative entry)
-  await supabase.from("super_credits").insert({
+  await admin.from("super_credits").insert({
     child_id: user.id,
     family_id: profile.family_id,
     amount: -item.cost_credits,
@@ -117,24 +126,37 @@ export async function getShopData(): Promise<{
   error?: string;
 }> {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) return { data: null, error: "Niet ingelogd." };
 
-  const [itemsResult, creditsResult, purchasesResult, streakResult] = await Promise.all([
-    supabase.from("shop_items").select("*").eq("is_active", true).order("cost_credits"),
-    supabase.from("super_credits").select("amount").eq("child_id", user.id),
-    supabase
-      .from("purchases")
-      .select("*, shop_items(*)")
-      .eq("child_id", user.id)
-      .eq("used", false)
-      .order("created_at", { ascending: false }),
-    supabase.from("streaks").select("status").eq("child_id", user.id).single(),
-  ]);
+  const admin = createAdminClient();
+
+  const [itemsResult, creditsResult, purchasesResult, streakResult] =
+    await Promise.all([
+      admin
+        .from("shop_items")
+        .select("*")
+        .eq("is_active", true)
+        .order("cost_credits"),
+      admin
+        .from("super_credits")
+        .select("amount")
+        .eq("child_id", user.id),
+      admin
+        .from("purchases")
+        .select("*, shop_items(*)")
+        .eq("child_id", user.id)
+        .eq("used", false)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("streaks")
+        .select("status")
+        .eq("child_id", user.id)
+        .single(),
+    ]);
 
   const balance = (creditsResult.data ?? []).reduce(
     (sum, c) => sum + c.amount,
@@ -178,15 +200,16 @@ export async function useStreakRestorer(
   purchaseId: string
 ): Promise<UseItemResult> {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) return { error: "Niet ingelogd." };
 
+  const admin = createAdminClient();
+
   // Verify purchase belongs to user and is unused
-  const { data: purchase } = await supabase
+  const { data: purchase } = await admin
     .from("purchases")
     .select("*, shop_items(item_type)")
     .eq("id", purchaseId)
@@ -202,7 +225,7 @@ export async function useStreakRestorer(
   }
 
   // Check streak is actually broken (not active)
-  const { data: streak } = await supabase
+  const { data: streak } = await admin
     .from("streaks")
     .select("*")
     .eq("child_id", user.id)
@@ -218,7 +241,7 @@ export async function useStreakRestorer(
   // Restore streak: set back to longest_count (or at least 1)
   // and mark as active. The child still needs to practice today.
   const restoredCount = Math.max(streak.longest_count, 1);
-  await supabase
+  await admin
     .from("streaks")
     .update({
       current_count: restoredCount,
@@ -230,7 +253,7 @@ export async function useStreakRestorer(
     .eq("child_id", user.id);
 
   // Mark purchase as used
-  await supabase
+  await admin
     .from("purchases")
     .update({ used: true, used_at: new Date().toISOString() })
     .eq("id", purchaseId);
@@ -250,15 +273,16 @@ export async function usePauseDay(
   purchaseId: string
 ): Promise<UseItemResult> {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) return { error: "Niet ingelogd." };
 
+  const admin = createAdminClient();
+
   // Verify purchase belongs to user and is unused
-  const { data: purchase } = await supabase
+  const { data: purchase } = await admin
     .from("purchases")
     .select("*, shop_items(item_type)")
     .eq("id", purchaseId)
@@ -274,7 +298,7 @@ export async function usePauseDay(
   }
 
   // Get current streak
-  const { data: streak } = await supabase
+  const { data: streak } = await admin
     .from("streaks")
     .select("*")
     .eq("child_id", user.id)
@@ -286,7 +310,7 @@ export async function usePauseDay(
 
   // Add today to grace_dates so streak logic skips this day
   const graceDates = [...(streak.grace_dates ?? []), todayStr];
-  await supabase
+  await admin
     .from("streaks")
     .update({
       grace_dates: graceDates,
@@ -295,7 +319,7 @@ export async function usePauseDay(
     .eq("child_id", user.id);
 
   // Mark purchase as used
-  await supabase
+  await admin
     .from("purchases")
     .update({ used: true, used_at: new Date().toISOString() })
     .eq("id", purchaseId);

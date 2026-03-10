@@ -168,6 +168,23 @@ export interface Message {
   created_at: string;
 }
 
+export interface StudioMessage {
+  id: string;
+  studio_id: string;
+  sender_id: string;
+  recipient_id: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface StudioParentLink {
+  id: string;
+  studio_id: string;
+  parent_id: string;
+  created_at: string;
+}
+
 export interface Achievement {
   id: string;
   name_key: string;

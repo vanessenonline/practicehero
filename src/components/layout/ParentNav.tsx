@@ -23,7 +23,14 @@ const navItems = [
  * instead of the client-side Supabase signOut(), because the latter hangs
  * due to the Browser Lock Manager API and fails to clear session cookies.
  */
-export function ParentNav() {
+interface ParentNavProps {
+  /** Family ID used to remember which children to show on the child login screen. */
+  familyId?: string | null;
+  /** Number of unread messages to display as a badge on the messages nav item */
+  unreadMessages?: number;
+}
+
+export function ParentNav({ familyId, unreadMessages = 0 }: ParentNavProps) {
   const t = useTranslations();
   const pathname = usePathname();
 
@@ -49,10 +56,16 @@ export function ParentNav() {
   function handleChildMode() {
     console.log('👶 Entering child mode via server-side route...');
 
-    // Set flag so ChildNav shows the "back to parent" button
     try {
+      // Mark child mode so ChildNav shows the "← Terug naar ouder" button
       localStorage.setItem("practicehero_child_mode", "true");
-      console.log('✅ Child mode flag set');
+
+      // Persist family ID so the child login screen can load the children list
+      if (familyId) {
+        localStorage.setItem("practicehero_family_id", familyId);
+      }
+
+      console.log('✅ Child mode flag set, family_id saved:', familyId);
     } catch {
       console.warn('⚠️  localStorage not available');
     }
@@ -98,6 +111,11 @@ export function ParentNav() {
               >
                 <Icon className="h-4 w-4" />
                 <span className="hidden sm:inline">{t(labelKey)}</span>
+                {href === "/inbox" && unreadMessages > 0 && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                    {unreadMessages > 9 ? "9+" : unreadMessages}
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -1,7 +1,9 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { PracticeContent } from "@/types/database";
+import type { LessonContent } from "@/types/lesson";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,19 +30,25 @@ export interface CompleteSessionResult {
 /**
  * Create a new active practice_sessions row when the child presses Start.
  * Returns the session ID to track on the client side.
+ *
+ * Uses the admin client for all DB queries to work around the ES256 JWT /
+ * PostgREST HS256 mismatch that causes RLS to silently filter all rows.
+ * Security is enforced by verifying the user via auth.getUser() and scoping
+ * all queries + inserts to user.id.
  */
 export async function startPracticeSession(
   instrumentId: string
 ): Promise<StartSessionResult> {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) return { error: "Niet ingelogd." };
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient();
+
+  const { data: profile } = await admin
     .from("profiles")
     .select("family_id, role")
     .eq("id", user.id)
@@ -52,7 +60,7 @@ export async function startPracticeSession(
 
   // Check if this child is a teacher student (has studio_id)
   let studioId: string | null = null;
-  const { data: teacherStudent } = await supabase
+  const { data: teacherStudent } = await admin
     .from("teacher_students")
     .select("studio_id")
     .eq("student_id", user.id)
@@ -62,7 +70,7 @@ export async function startPracticeSession(
     studioId = teacherStudent.studio_id;
   }
 
-  const { data: session, error } = await supabase
+  const { data: session, error } = await admin
     .from("practice_sessions")
     .insert({
       child_id: user.id,
@@ -116,28 +124,45 @@ export async function completePracticeSession(
   audioConfidence: number | null
 ): Promise<CompleteSessionResult> {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return { bonusPoints: 0, newStreakCount: 0, streakMilestone: false, totalPoints: 0, superCreditsEarned: 0, error: "Niet ingelogd." };
+  if (!user) {
+    return {
+      bonusPoints: 0,
+      newStreakCount: 0,
+      streakMilestone: false,
+      totalPoints: 0,
+      superCreditsEarned: 0,
+      error: "Niet ingelogd.",
+    };
+  }
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient();
+
+  const { data: profile } = await admin
     .from("profiles")
     .select("family_id, display_name")
     .eq("id", user.id)
     .single();
 
   if (!profile) {
-    return { bonusPoints: 0, newStreakCount: 0, streakMilestone: false, totalPoints: 0, superCreditsEarned: 0, error: "Profiel niet gevonden." };
+    return {
+      bonusPoints: 0,
+      newStreakCount: 0,
+      streakMilestone: false,
+      totalPoints: 0,
+      superCreditsEarned: 0,
+      error: "Profiel niet gevonden.",
+    };
   }
 
   const now = new Date();
   const todayStr = now.toISOString().split("T")[0]; // YYYY-MM-DD
 
-  // 1. Update the practice session row
-  const { error: updateError } = await supabase
+  // 1. Update the practice session row (scoped to sessionId + child_id for safety)
+  const { error: updateError } = await admin
     .from("practice_sessions")
     .update({
       ended_at: now.toISOString(),
@@ -150,7 +175,14 @@ export async function completePracticeSession(
     .eq("child_id", user.id); // ensure ownership
 
   if (updateError) {
-    return { bonusPoints: 0, newStreakCount: 0, streakMilestone: false, totalPoints: 0, superCreditsEarned: 0, error: updateError.message };
+    return {
+      bonusPoints: 0,
+      newStreakCount: 0,
+      streakMilestone: false,
+      totalPoints: 0,
+      superCreditsEarned: 0,
+      error: updateError.message,
+    };
   }
 
   // 2. Calculate bonus points for THIS session only.
@@ -166,7 +198,7 @@ export async function completePracticeSession(
 
   // 3. Award bonus points if any
   if (bonusPoints > 0) {
-    await supabase.from("points").insert({
+    await admin.from("points").insert({
       child_id: user.id,
       family_id: profile.family_id,
       amount: bonusPoints,
@@ -177,7 +209,7 @@ export async function completePracticeSession(
   }
 
   // 4. Get current total points (after the insert above)
-  const { data: pointEntries } = await supabase
+  const { data: pointEntries } = await admin
     .from("points")
     .select("amount")
     .eq("child_id", user.id);
@@ -190,7 +222,7 @@ export async function completePracticeSession(
   // 5. Auto-convert every 10 points to 1 super credit
   //    Check how many credits should exist vs how many do exist
   const expectedCredits = Math.floor(totalPoints / 10);
-  const { data: existingCredits } = await supabase
+  const { data: existingCredits } = await admin
     .from("super_credits")
     .select("amount")
     .eq("child_id", user.id)
@@ -204,7 +236,7 @@ export async function completePracticeSession(
   let superCreditsEarned = 0;
   if (expectedCredits > currentConvertedCredits) {
     superCreditsEarned = expectedCredits - currentConvertedCredits;
-    await supabase.from("super_credits").insert({
+    await admin.from("super_credits").insert({
       child_id: user.id,
       family_id: profile.family_id,
       amount: superCreditsEarned,
@@ -219,7 +251,7 @@ export async function completePracticeSession(
   //    Stopping early still saves the session record but does NOT advance the streak.
   const goalMet = totalPracticedSeconds >= GOAL_SECONDS;
 
-  const { data: existingStreak } = await supabase
+  const { data: existingStreak } = await admin
     .from("streaks")
     .select("*")
     .eq("child_id", user.id)
@@ -232,7 +264,7 @@ export async function completePracticeSession(
   if (goalMet) {
     if (!existingStreak) {
       // First qualifying session – create streak row
-      await supabase.from("streaks").insert({
+      await admin.from("streaks").insert({
         child_id: user.id,
         family_id: profile.family_id,
         current_count: 1,
@@ -270,7 +302,7 @@ export async function completePracticeSession(
         const newMilestone = Math.floor(newStreakCount / 10);
         streakMilestone = newMilestone > prevMilestone && newMilestone > 0;
 
-        await supabase
+        await admin
           .from("streaks")
           .update({
             current_count: newStreakCount,
@@ -284,7 +316,7 @@ export async function completePracticeSession(
 
         // Award streak milestone super credit
         if (streakMilestone) {
-          await supabase.from("super_credits").insert({
+          await admin.from("super_credits").insert({
             child_id: user.id,
             family_id: profile.family_id,
             amount: 1,
@@ -313,21 +345,24 @@ export async function completePracticeSession(
  * Fetch the active lesson and motivator content set by the parent
  * for a specific child and instrument. Uses date-based filtering when
  * available, falls back to is_active flag for legacy rows without dates.
+ *
+ * The lesson is returned as a normalised LessonContent so the practice UI
+ * can also accept course_lesson content from the same prop.
  */
 export async function getPracticeContent(
   childId: string,
   instrumentId: string
 ): Promise<{
-  lesson: PracticeContent | null;
+  lesson: LessonContent | null;
   motivator: PracticeContent | null;
 }> {
-  const supabase = await createClient();
+  const admin = createAdminClient();
   const today = new Date().toISOString().split("T")[0];
 
   // Fetch content that is either:
   // 1. Active and within the current date range (start_date <= today <= end_date), OR
   // 2. Active but no dates set (legacy rows)
-  const { data } = await supabase
+  const { data } = await admin
     .from("practice_content")
     .select("*")
     .eq("child_id", childId)
@@ -336,12 +371,83 @@ export async function getPracticeContent(
     .or(`and(start_date.lte.${today},end_date.gte.${today}),start_date.is.null`)
     .order("sort_order");
 
-  const lesson =
+  const rawLesson =
     (data ?? []).find((c) => c.content_type === "lesson") ?? null;
   const motivator =
     (data ?? []).find((c) => c.content_type === "motivator") ?? null;
 
+  // Adapt PracticeContent → LessonContent (normalised shape)
+  const lesson: LessonContent | null = rawLesson
+    ? {
+        id: rawLesson.id,
+        title: rawLesson.title,
+        description: rawLesson.description,
+        video_url: rawLesson.video_url,
+        audio_url: rawLesson.audio_url,
+        is_repeat: rawLesson.is_repeat,
+        bonus_points: rawLesson.bonus_points,
+        source: "practice_content",
+      }
+    : null;
+
   return { lesson, motivator };
+}
+
+// ---------------------------------------------------------------------------
+// Get current course lesson for a teacher-managed student
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch the current course lesson for a teacher-managed student.
+ *
+ * Looks up the student's teacher_students row (course_id, current_level,
+ * current_lesson) and fetches the corresponding course_lessons row.
+ *
+ * Returns null if the student has no assigned course or if the matching
+ * lesson does not exist yet.
+ *
+ * Also returns `tsId` (teacher_students.id) so the practice session can
+ * pass it to advanceStudentLesson() after completion.
+ */
+export async function getStudentCurrentLesson(childId: string): Promise<{
+  lesson: LessonContent | null;
+  tsId: string | null;
+}> {
+  const admin = createAdminClient();
+
+  // Find the student's teacher relationship row
+  const { data: ts } = await admin
+    .from("teacher_students")
+    .select("id, course_id, current_level, current_lesson")
+    .eq("student_id", childId)
+    .eq("is_active", true)
+    .single();
+
+  if (!ts || !ts.course_id) return { lesson: null, tsId: null };
+
+  // Fetch the matching course lesson
+  const { data: cl } = await admin
+    .from("course_lessons")
+    .select("id, title, description, video_url, audio_url")
+    .eq("course_id", ts.course_id)
+    .eq("level_number", ts.current_level)
+    .eq("lesson_number", ts.current_lesson)
+    .single();
+
+  if (!cl) return { lesson: null, tsId: ts.id };
+
+  const lesson: LessonContent = {
+    id: cl.id,
+    title: cl.title,
+    description: cl.description,
+    video_url: cl.video_url,
+    audio_url: cl.audio_url,
+    lesson_number: ts.current_lesson,
+    level_number: ts.current_level,
+    source: "course_lesson",
+  };
+
+  return { lesson, tsId: ts.id };
 }
 
 // ---------------------------------------------------------------------------
@@ -355,12 +461,13 @@ export async function getPracticeContent(
  */
 export async function getTodayPracticeSeconds(): Promise<number> {
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) return 0;
+
+  const admin = createAdminClient();
 
   const today = new Date();
   const startOfDay = new Date(today);
@@ -368,7 +475,7 @@ export async function getTodayPracticeSeconds(): Promise<number> {
   const endOfDay = new Date(today);
   endOfDay.setHours(23, 59, 59, 999);
 
-  const { data: sessions, error } = await supabase
+  const { data: sessions, error } = await admin
     .from("practice_sessions")
     .select("duration_seconds")
     .eq("child_id", user.id)

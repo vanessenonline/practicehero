@@ -106,7 +106,7 @@ export function AddCourseForm({ instruments, locale }: AddCourseFormProps) {
         <CardContent className="flex flex-col items-center gap-4 py-12">
           <CheckCircle2 className="h-16 w-16 text-green-500" />
           <p className="text-xl font-bold text-green-700">
-            Gelijkreeks aangemaakt!
+            Cursus aangemaakt!
           </p>
           <p className="text-sm text-muted-foreground">{courseName}</p>
           <p className="text-sm text-muted-foreground">
@@ -128,7 +128,7 @@ export function AddCourseForm({ instruments, locale }: AddCourseFormProps) {
 
       {/* Name */}
       <div className="space-y-1.5">
-        <Label htmlFor="name">Naam gelijkreeks</Label>
+        <Label htmlFor="name">Naam cursus</Label>
         <Input
           id="name"
           placeholder="bijv. Klassieke piano niveau 1"
@@ -191,7 +191,7 @@ export function AddCourseForm({ instruments, locale }: AddCourseFormProps) {
         <Label htmlFor="description">Beschrijving (optioneel)</Label>
         <Textarea
           id="description"
-          placeholder="Beschrijf de inhoud van deze gelijkreeks..."
+          placeholder="Beschrijf de inhoud van deze cursus..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
@@ -203,10 +203,10 @@ export function AddCourseForm({ instruments, locale }: AddCourseFormProps) {
         {loading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Gelijkreeks aanmaken...
+            Cursus aanmaken...
           </>
         ) : (
-          "Gelijkreeks aanmaken"
+          "Cursus aanmaken"
         )}
       </Button>
     </form>

@@ -1,55 +1,47 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Music } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Music, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/providers/SupabaseProvider";
 
 const navItems = [
   { href: "/teacher/dashboard", icon: LayoutDashboard, labelKey: "nav.teacher.dashboard" },
   { href: "/teacher/students", icon: Users, labelKey: "nav.teacher.students" },
   { href: "/teacher/courses", icon: BookOpen, labelKey: "nav.teacher.courses" },
+  { href: "/teacher/messages", icon: MessageCircle, labelKey: "nav.teacher.messages" },
   { href: "/teacher/settings", icon: Settings, labelKey: "nav.teacher.settings" },
 ] as const;
+
+interface TeacherNavProps {
+  /** Number of unread messages to display as a badge on the messages nav item */
+  unreadMessages?: number;
+}
 
 /**
  * Top navigation for the teacher dashboard.
  * Professional design matching ParentNav pattern.
- * Provides access to dashboard, student management, courses, and settings.
+ * Provides access to dashboard, student management, courses, messages, and settings.
+ * Shows an unread badge on the messages link when there are unread messages.
  */
-export function TeacherNav() {
+export function TeacherNav({ unreadMessages = 0 }: TeacherNavProps) {
   const t = useTranslations();
   const pathname = usePathname();
-  const router = useRouter();
-  const { signOut } = useAuth();
 
   const locale = pathname.split("/")[1];
 
-  async function handleLogout() {
-    try {
-      console.log('🔓 Logging out...');
-      await signOut();
-      console.log('✅ Signed out from Supabase');
-
-      // Clear any local storage related to session
-      try {
-        localStorage.removeItem('practicehero_child_mode');
-        localStorage.removeItem('practicehero_family_id');
-      } catch {
-        // localStorage may not be available
-      }
-
-      // Push to login and refresh
-      router.push(`/${locale}/login`);
-      router.refresh();
-    } catch (error) {
-      console.error('❌ Logout error:', error);
-      // Force redirect even if signOut failed
-      router.push(`/${locale}/login`);
-    }
+  /**
+   * Server-side logout via the /api/auth/logout route.
+   * Uses window.location.href (full page reload) so the browser processes
+   * the cleared session cookies from the server before the next request.
+   * Client-side signOut() is avoided because it can hang for 10s due to
+   * a Browser Lock Manager bug (see KNOWN_ISSUES.md, commit b6d74fd).
+   */
+  function handleLogout() {
+    const loginUrl = encodeURIComponent(`/${locale}/login`);
+    window.location.href = `/api/auth/logout?redirect=${loginUrl}`;
   }
 
   return (
@@ -88,6 +80,11 @@ export function TeacherNav() {
               >
                 <Icon className="h-4 w-4" />
                 <span className="hidden sm:inline">{t(labelKey)}</span>
+                {href === "/teacher/messages" && unreadMessages > 0 && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                    {unreadMessages > 9 ? "9+" : unreadMessages}
+                  </span>
+                )}
               </Link>
             );
           })}

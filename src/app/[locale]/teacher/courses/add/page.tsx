@@ -34,7 +34,7 @@ export default async function AddCoursePage({
       <div>
         <h1 className="text-2xl font-bold">{t("teacher.courses.add")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Maak een nieuwe gelijkreeks aan met lessen en niveaus
+          Maak een nieuwe cursus aan met lessen en niveaus
         </p>
       </div>
 

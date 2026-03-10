@@ -1,7 +1,7 @@
 import createMiddleware from "next-intl/middleware";
 import { type NextRequest, NextResponse } from "next/server";
-import { routing } from "./i18n/routing";
-import { updateSession } from "./src/lib/supabase/middleware";
+import { routing } from "../i18n/routing";
+import { updateSession } from "./lib/supabase/middleware";
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -32,7 +32,7 @@ function getLocale(pathname: string): string {
   return pathname.match(/^\/(nl|en)/)?.[1] || "nl";
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // 1. Refresh Supabase session and get the current user
   const { response: supabaseResponse, user } = await updateSession(request);
 
@@ -106,7 +106,9 @@ export async function middleware(request: NextRequest) {
     role === "teacher" &&
     parentOnlyPaths.some((p) => path.startsWith(p))
   ) {
-    return NextResponse.redirect(new URL(`/${locale}/teacher/dashboard`, request.url));
+    return NextResponse.redirect(
+      new URL(`/${locale}/teacher/dashboard`, request.url)
+    );
   }
 
   // Parents cannot access teacher-only routes

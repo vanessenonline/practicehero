@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, Music, ShoppingBag, Trophy, MessageCircle, ArrowLeft } from "lucide-react";
+import { Home, Music, ShoppingBag, Trophy, MessageCircle, ArrowLeft, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -16,16 +16,27 @@ const navItems = [
   { href: "/messages", icon: MessageCircle, labelKey: "nav.messages" },
 ] as const;
 
+interface ChildNavProps {
+  /** Number of unread messages to display as a badge on the messages nav item */
+  unreadMessages?: number;
+  /** User role: "child" (family child) or "student" (teacher-linked student) */
+  userRole?: "child" | "student";
+}
+
 /**
  * Bottom navigation bar for the child view.
  * Colorful, large touch targets, fun design for kids.
- * Includes a "back to parent" button when in child mode.
+ *
+ * Shows a contextual exit button (fixed top-left):
+ * - Child mode (parent handed device): "Terug naar ouder" → parent login
+ * - Student (leerlingcode login): "Uitloggen" → student login tab
+ * - Family child (direct PIN login): "Uitloggen" → child login tab
  *
  * Uses the server-side /api/auth/logout route instead of client-side
  * Supabase signOut(), because the latter hangs due to the Browser Lock
  * Manager API and fails to clear session cookies.
  */
-export function ChildNav() {
+export function ChildNav({ unreadMessages = 0, userRole = "child" }: ChildNavProps) {
   const t = useTranslations();
   const pathname = usePathname();
 
@@ -43,29 +54,40 @@ export function ChildNav() {
 
   /** Go back to parent: clear flag, log out via server, redirect to parent login */
   function handleBackToParent() {
-    console.log('👪 Going back to parent via server-side route...');
-
     try {
       localStorage.removeItem("practicehero_child_mode");
-      console.log('✅ Child mode cleared');
     } catch {
       // localStorage may not be available
     }
 
-    // Use server-side logout which properly clears auth cookies
     window.location.href = `/api/auth/logout?redirect=/${locale}/login`;
+  }
+
+  /** Log out: redirect to the appropriate login tab so next user can log in quickly */
+  function handleLogout() {
+    const tab = userRole === "student" ? "student" : "child";
+    window.location.href = `/api/auth/logout?redirect=/${locale}/login?tab=${tab}`;
   }
 
   return (
     <>
-      {/* Back to parent button (floating) */}
-      {isChildMode && (
+      {/* Contextual exit button (floating top-left) */}
+      {isChildMode ? (
         <Button
           onClick={handleBackToParent}
           className="fixed top-4 left-4 z-50 bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
           <span className="hidden sm:inline">Terug naar ouder</span>
+        </Button>
+      ) : (
+        <Button
+          onClick={handleLogout}
+          variant="outline"
+          className="fixed top-4 left-4 z-50 gap-2 bg-white/90 backdrop-blur-sm border-gray-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+        >
+          <LogOut className="h-4 w-4" />
+          <span className="hidden sm:inline">Uitloggen</span>
         </Button>
       )}
 
@@ -87,12 +109,19 @@ export function ChildNav() {
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon
-                className={cn(
-                  "h-5 w-5 transition-colors",
-                  isActive && "text-orange-500"
+              <div className="relative">
+                <Icon
+                  className={cn(
+                    "h-5 w-5 transition-colors",
+                    isActive && "text-orange-500"
+                  )}
+                />
+                {href === "/messages" && unreadMessages > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                    {unreadMessages > 9 ? "9+" : unreadMessages}
+                  </span>
                 )}
-              />
+              </div>
               <span>{t(labelKey)}</span>
             </Link>
           );

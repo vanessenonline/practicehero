@@ -53,7 +53,7 @@ export function AddStudentForm({
   const [selectedInstrumentIds, setSelectedInstrumentIds] = useState<string[]>(
     []
   );
-  const [courseId, setCourseId] = useState<string>("");
+  const [courseId, setCourseId] = useState<string>("none");
   const [startDate, setStartDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -107,7 +107,7 @@ export function AddStudentForm({
       displayName.trim(),
       pin,
       selectedInstrumentIds,
-      courseId || null,
+      courseId && courseId !== "none" ? courseId : null,
       startDate,
       targetEndDate || null
     );
@@ -251,13 +251,13 @@ export function AddStudentForm({
       {/* Course (optional) */}
       {courses.length > 0 && (
         <div className="space-y-1.5">
-          <Label htmlFor="course">Gelijkreeks (optioneel)</Label>
+          <Label htmlFor="course">Cursus (optioneel)</Label>
           <Select value={courseId} onValueChange={setCourseId}>
             <SelectTrigger id="course">
-              <SelectValue placeholder="Geen gelijkreeks geselecteerd" />
+              <SelectValue placeholder="Geen cursus geselecteerd" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Geen</SelectItem>
+              <SelectItem value="none">Geen</SelectItem>
               {courses.map((course) => (
                 <SelectItem key={course.id} value={course.id}>
                   {course.name}

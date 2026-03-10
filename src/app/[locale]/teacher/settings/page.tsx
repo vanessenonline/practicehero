@@ -2,8 +2,9 @@ import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { getStudio } from "@/lib/actions/teacher";
+import { CopyButton } from "@/components/teacher/CopyButton";
 
 /**
  * Teacher settings page – manage studio name, teacher code, and other settings.
@@ -42,14 +43,7 @@ export default async function TeacherSettingsPage({
                 </p>
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-semibold">{studio.name}</h2>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => navigator.clipboard.writeText(studio.name)}
-                    className="text-muted-foreground"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+                  <CopyButton text={studio.name} label="Kopieer studionaam" />
                 </div>
               </div>
 
@@ -62,16 +56,7 @@ export default async function TeacherSettingsPage({
                   <code className="text-2xl font-bold tracking-wider font-mono bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
                     {studio.teacher_code}
                   </code>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      navigator.clipboard.writeText(studio.teacher_code)
-                    }
-                    className="border-blue-300 hover:bg-blue-50"
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+                  <CopyButton text={studio.teacher_code} label="Kopieer leeraarcode" />
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   Leerlingen hebben deze code nodig om in te loggen

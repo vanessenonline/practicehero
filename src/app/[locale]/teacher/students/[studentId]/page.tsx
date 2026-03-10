@@ -3,9 +3,11 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Flame, Trophy, Coins } from "lucide-react";
-import { getStudentDetail } from "@/lib/actions/teacher";
+import { ChevronLeft, Flame, Trophy, Coins, MessageCircle, BookOpen } from "lucide-react";
+import { getStudentDetail, getCourses } from "@/lib/actions/teacher";
 import { createClient } from "@/lib/supabase/server";
+import { StudentMessagingToggle } from "./StudentMessagingToggle";
+import { StudentCourseCard } from "./StudentCourseCard";
 
 /**
  * Student detail page – shows student profile, current progress, and practice history.
@@ -19,7 +21,10 @@ export default async function StudentDetailPage({
   const { locale, studentId } = await params;
   const t = await getTranslations();
 
-  const { student, error } = await getStudentDetail(studentId);
+  const [{ student, error }, courses] = await Promise.all([
+    getStudentDetail(studentId),
+    getCourses(),
+  ]);
 
   // Fetch recent practice sessions
   let recentSessions: any[] = [];
@@ -152,6 +157,43 @@ export default async function StudentDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Course assignment */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-purple-500" />
+            Cursus
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StudentCourseCard
+            studentId={studentId}
+            initialCourseId={student.course_id ?? null}
+            initialCourseName={student.course_name ?? null}
+            initialLevel={student.current_level}
+            initialLesson={student.current_lesson}
+            initialLessonTitle={student.current_lesson_title ?? null}
+            courses={courses}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Messaging settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-blue-500" />
+            {t("teacher.students.messaging")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StudentMessagingToggle
+            studentId={studentId}
+            initialCanSend={student.can_send_messages ?? false}
+          />
+        </CardContent>
+      </Card>
 
       {/* Dates */}
       <Card>

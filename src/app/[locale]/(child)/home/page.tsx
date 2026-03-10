@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Flame, Star, Zap, Music, MessageCircle, Trophy } from "lucide-react";
+import { Flame, Star, Zap, Music, MessageCircle, Trophy, BookOpen } from "lucide-react";
 import { getChildDashboard } from "@/lib/actions/child";
 
 // Map instrument name_key to emoji
@@ -53,6 +53,7 @@ export default async function ChildHomePage({
     practicedToday,
     weeklyMinutes,
     unreadMessages,
+    currentLesson,
   } = dashboard;
 
   const streakCount = streak?.current_count ?? 0;
@@ -158,16 +159,10 @@ export default async function ChildHomePage({
             </p>
           ) : (
             <div className="grid gap-2">
-              {instruments.map((ci) => (
-                <Link
-                  key={ci.id}
-                  href={`/${locale}/practice/${ci.instrument_id}`}
-                >
-                  <Button
-                    variant="outline"
-                    className="h-14 w-full justify-start gap-3 text-base"
-                    disabled={practicedToday}
-                  >
+              {instruments.map((ci) => {
+                // Build the button content once to avoid duplication
+                const btnContent = (
+                  <>
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 text-2xl">
                       {instIcon(ci.instrument.name_key)}
                     </div>
@@ -183,13 +178,73 @@ export default async function ChildHomePage({
                         Primair
                       </Badge>
                     )}
-                  </Button>
-                </Link>
-              ))}
+                  </>
+                );
+
+                // Don't wrap in Link when already practiced today — a disabled
+                // <button> inside an <a> is still keyboard-reachable via the anchor.
+                if (practicedToday) {
+                  return (
+                    <Button
+                      key={ci.id}
+                      variant="outline"
+                      className="h-14 w-full justify-start gap-3 text-base"
+                      disabled
+                    >
+                      {btnContent}
+                    </Button>
+                  );
+                }
+
+                return (
+                  <Link key={ci.id} href={`/${locale}/practice/${ci.instrument_id}`}>
+                    <Button
+                      variant="outline"
+                      className="h-14 w-full justify-start gap-3 text-base"
+                    >
+                      {btnContent}
+                    </Button>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Next course lesson (teacher students only) */}
+      {currentLesson && (
+        <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-violet-50">
+          <CardContent className="flex items-center justify-between gap-3 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                <BookOpen className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-purple-600">
+                  {currentLesson.level_number !== undefined &&
+                  currentLesson.lesson_number !== undefined
+                    ? `Niveau ${currentLesson.level_number} — Les ${currentLesson.lesson_number}`
+                    : "Jouw volgende les"}
+                </p>
+                <p className="font-semibold text-purple-900 line-clamp-1">
+                  {currentLesson.title}
+                </p>
+              </div>
+            </div>
+            {instruments.length > 0 && (
+              <Link
+                href={`/${locale}/practice/${instruments[0].instrument_id}`}
+                className="shrink-0"
+              >
+                <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+                  Oefenen →
+                </Button>
+              </Link>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Weekly overview */}
       <Card>

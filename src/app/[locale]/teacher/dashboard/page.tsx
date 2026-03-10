@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Users, Flame, Music } from "lucide-react";
-import { getTeacherDashboard, getStudents } from "@/lib/actions/teacher";
-import { createClient } from "@/lib/supabase/server";
+import { getTeacherDashboard } from "@/lib/actions/teacher";
+import { CopyButton } from "@/components/teacher/CopyButton";
 
 /**
  * Teacher dashboard – displays studio overview, student count, and recent practice activity.
@@ -19,28 +19,10 @@ export default async function TeacherDashboardPage({
   const { locale } = await params;
   const t = await getTranslations();
 
-  const { studio, error: dashboardError } = await getTeacherDashboard();
-  const students = await getStudents();
-
-  // Fetch recent practice sessions for this studio
-  let recentSessions: any[] = [];
-  if (studio) {
-    const supabase = await createClient();
-    const today = new Date().toISOString().split("T")[0];
-
-    const { data: sessions } = await supabase
-      .from("practice_sessions")
-      .select("id, child_id, instrument_id, duration_seconds, started_at, status, profiles(display_name), instruments(name_key)")
-      .eq("studio_id", studio.id)
-      .gte("started_at", `${today}T00:00:00`)
-      .order("started_at", { ascending: false })
-      .limit(10);
-
-    recentSessions = sessions || [];
-  }
+  const { studio, error: dashboardError, recentSessions = [] } = await getTeacherDashboard();
 
   // Map instrument name_key to emoji
-  function instIcon(nameKey: string): string {
+  function instIcon(nameKey: string | null): string {
     const icons: Record<string, string> = {
       piano: "🎹",
       drums: "🥁",
@@ -49,7 +31,7 @@ export default async function TeacherDashboardPage({
       violin: "🎻",
       trumpet: "🎺",
     };
-    return icons[nameKey] ?? "🎵";
+    return nameKey ? (icons[nameKey] ?? "🎵") : "🎵";
   }
 
   // Format duration
@@ -99,16 +81,8 @@ export default async function TeacherDashboardPage({
                 <code className="text-2xl font-bold tracking-wider font-mono">
                   {studio.teacher_code}
                 </code>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(studio.teacher_code);
-                  }}
-                  className="text-muted-foreground"
-                >
-                  📋
-                </Button>
+                {/* CopyButton is a Client Component — onClick not allowed in Server Components */}
+                <CopyButton text={studio.teacher_code} label="Kopieer code" />
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 {t("teacher.studio.shareCode")}
@@ -164,19 +138,17 @@ export default async function TeacherDashboardPage({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentSessions.map((session: any) => (
+              {recentSessions.map((session) => (
                 <div
                   key={session.id}
                   className="flex items-center justify-between rounded-lg border p-3"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="text-lg">
-                      {instIcon(session.instruments?.name_key || "piano")}
+                      {instIcon(session.instrument_name_key)}
                     </span>
                     <div className="min-w-0">
-                      <p className="font-medium truncate">
-                        {session.profiles?.display_name || "Onbekende leerling"}
-                      </p>
+                      <p className="font-medium truncate">{session.student_name}</p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(session.started_at).toLocaleTimeString(locale, {
                           hour: "2-digit",

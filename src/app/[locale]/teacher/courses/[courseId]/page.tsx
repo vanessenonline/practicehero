@@ -46,7 +46,7 @@ export default async function CourseDetailPage({
           </Link>
         </Button>
         <Card className="text-center p-8">
-          <p className="text-muted-foreground">Gelijkreeks niet gevonden</p>
+          <p className="text-muted-foreground">Cursus niet gevonden</p>
         </Card>
       </div>
     );

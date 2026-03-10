@@ -1,12 +1,15 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudentCurrentLesson } from "@/lib/actions/practice";
 import type {
   Profile,
   Instrument,
   ChildInstrument,
   Streak,
 } from "@/types/database";
+import type { LessonContent } from "@/types/lesson";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -25,6 +28,11 @@ export interface ChildDashboard {
   weeklyMinutes: number[];
   /** Number of unread messages for this child. */
   unreadMessages: number;
+  /**
+   * Current course lesson for teacher-managed students.
+   * Null for family children or students without an assigned course.
+   */
+  currentLesson: LessonContent | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -34,13 +42,18 @@ export interface ChildDashboard {
 /**
  * Fetch all data the child home screen needs in a single round-trip set.
  * Returns an error string when the user is not authenticated as a child.
+ *
+ * Uses the admin client for all database queries to work around the ES256
+ * JWT / PostgREST HS256 mismatch that causes RLS to silently filter all rows.
+ * Security is enforced by scoping all queries to the verified user.id from
+ * auth.getUser() (which calls the Auth API endpoint directly, not PostgREST).
  */
 export async function getChildDashboard(): Promise<{
   dashboard: ChildDashboard | null;
   error?: string;
 }> {
+  // Auth API call — uses JWT verification endpoint, not PostgREST.
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -49,8 +62,11 @@ export async function getChildDashboard(): Promise<{
     return { dashboard: null, error: "Not authenticated" };
   }
 
+  // All database queries use admin client with explicit child_id = user.id filtering.
+  const admin = createAdminClient();
+
   // Load the child's profile
-  const { data: profile } = await supabase
+  const { data: profile } = await admin
     .from("profiles")
     .select("*")
     .eq("id", user.id)
@@ -75,7 +91,7 @@ export async function getChildDashboard(): Promise<{
   sundayEnd.setDate(monday.getDate() + 6);
   sundayEnd.setHours(23, 59, 59, 999);
 
-  // Run the remaining queries in parallel
+  // Run the remaining queries in parallel — all scoped to user.id
   const [
     childInstrumentsResult,
     allInstrumentsResult,
@@ -86,36 +102,36 @@ export async function getChildDashboard(): Promise<{
     messagesResult,
   ] = await Promise.all([
     // Instrument links for this child
-    supabase
+    admin
       .from("child_instruments")
       .select("*")
       .eq("child_id", user.id)
       .order("is_primary", { ascending: false }),
 
     // All instruments reference table
-    supabase.from("instruments").select("*"),
+    admin.from("instruments").select("*"),
 
     // Current streak row
-    supabase
+    admin
       .from("streaks")
       .select("*")
       .eq("child_id", user.id)
       .single(),
 
     // All point entries (to sum balance)
-    supabase
+    admin
       .from("points")
       .select("amount")
       .eq("child_id", user.id),
 
     // All super credit entries (to sum balance)
-    supabase
+    admin
       .from("super_credits")
       .select("amount")
       .eq("child_id", user.id),
 
     // This week's completed practice sessions
-    supabase
+    admin
       .from("practice_sessions")
       .select("started_at, duration_seconds")
       .eq("child_id", user.id)
@@ -124,7 +140,7 @@ export async function getChildDashboard(): Promise<{
       .lte("started_at", sundayEnd.toISOString()),
 
     // Unread messages for this child
-    supabase
+    admin
       .from("messages")
       .select("id", { count: "exact", head: true })
       .eq("recipient_id", user.id)
@@ -174,6 +190,13 @@ export async function getChildDashboard(): Promise<{
   // --- Unread messages ---
   const unreadMessages = messagesResult.count ?? 0;
 
+  // --- Current course lesson (teacher students only) ---
+  // Only fetch for students (family_id = null) — family children don't have a course.
+  const currentLesson =
+    profile.family_id === null
+      ? (await getStudentCurrentLesson(user.id)).lesson
+      : null;
+
   return {
     dashboard: {
       profile,
@@ -184,6 +207,7 @@ export async function getChildDashboard(): Promise<{
       practicedToday,
       weeklyMinutes,
       unreadMessages,
+      currentLesson,
     },
   };
 }

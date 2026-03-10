@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 interface SendMessageResult {
   success?: boolean;
@@ -9,6 +10,11 @@ interface SendMessageResult {
 
 /**
  * Send a message from the logged-in parent to a child in the same family.
+ *
+ * Uses the admin client for all DB queries to work around the ES256 JWT /
+ * PostgREST HS256 mismatch that causes RLS to silently filter all rows.
+ * Security is enforced by verifying the user via auth.getUser() and
+ * checking same-family membership before inserting the message.
  */
 export async function sendMessage(
   recipientId: string,
@@ -19,7 +25,6 @@ export async function sendMessage(
   }
 
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -28,8 +33,10 @@ export async function sendMessage(
     return { error: "Niet ingelogd" };
   }
 
-  // Get the sender's profile to verify family membership
-  const { data: senderProfile } = await supabase
+  const admin = createAdminClient();
+
+  // Get the sender's profile to verify family membership and permissions
+  const { data: senderProfile } = await admin
     .from("profiles")
     .select("family_id, role, can_send_messages")
     .eq("id", user.id)
@@ -45,7 +52,7 @@ export async function sendMessage(
   }
 
   // Verify the recipient is in the same family
-  const { data: recipientProfile } = await supabase
+  const { data: recipientProfile } = await admin
     .from("profiles")
     .select("family_id")
     .eq("id", recipientId)
@@ -65,7 +72,7 @@ export async function sendMessage(
     return { error: "Ontvanger niet gevonden" };
   }
 
-  const { error } = await supabase.from("messages").insert({
+  const { error } = await admin.from("messages").insert({
     family_id: senderProfile.family_id,
     sender_id: user.id,
     recipient_id: recipientId,
@@ -89,14 +96,15 @@ export async function markMessagesRead(
   if (senderIds.length === 0) return;
 
   const supabase = await createClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) return;
 
-  await supabase
+  const admin = createAdminClient();
+
+  await admin
     .from("messages")
     .update({ is_read: true })
     .eq("recipient_id", user.id)
