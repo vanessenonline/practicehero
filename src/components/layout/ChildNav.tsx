@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Home, Music, ShoppingBag, Trophy, MessageCircle, ArrowLeft, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { LogoutConfirmDialog } from "@/components/layout/LogoutConfirmDialog";
 
 const navItems = [
   { href: "/home", icon: Home, labelKey: "nav.home" },
@@ -42,6 +43,7 @@ export function ChildNav({ unreadMessages = 0, userRole = "child" }: ChildNavPro
 
   // Track if we're in child mode (parent handed device to child)
   const [isChildMode, setIsChildMode] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Extract locale from pathname (e.g., /nl/home -> nl)
   const locale = pathname.split("/")[1];
@@ -82,7 +84,7 @@ export function ChildNav({ unreadMessages = 0, userRole = "child" }: ChildNavPro
         </Button>
       ) : (
         <Button
-          onClick={handleLogout}
+          onClick={() => setShowLogoutConfirm(true)}
           variant="outline"
           className="fixed top-4 left-4 z-50 gap-2 bg-white/90 backdrop-blur-sm border-gray-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
         >
@@ -90,6 +92,12 @@ export function ChildNav({ unreadMessages = 0, userRole = "child" }: ChildNavPro
           <span className="hidden sm:inline">Uitloggen</span>
         </Button>
       )}
+
+      <LogoutConfirmDialog
+        open={showLogoutConfirm}
+        onOpenChange={setShowLogoutConfirm}
+        onConfirm={handleLogout}
+      />
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-white/95 backdrop-blur-sm safe-area-bottom">
       <div className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">

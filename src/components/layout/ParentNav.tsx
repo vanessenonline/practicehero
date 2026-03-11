@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, Users, MessageCircle, Settings, LogOut, Music, Baby } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { LogoutConfirmDialog } from "@/components/layout/LogoutConfirmDialog";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, labelKey: "nav.dashboard" },
@@ -33,6 +35,7 @@ interface ParentNavProps {
 export function ParentNav({ familyId, unreadMessages = 0 }: ParentNavProps) {
   const t = useTranslations();
   const pathname = usePathname();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const locale = pathname.split("/")[1];
 
@@ -134,12 +137,18 @@ export function ParentNav({ familyId, unreadMessages = 0 }: ParentNavProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="text-muted-foreground hover:text-destructive"
           >
             <LogOut className="h-4 w-4" />
           </Button>
         </nav>
+
+        <LogoutConfirmDialog
+          open={showLogoutConfirm}
+          onOpenChange={setShowLogoutConfirm}
+          onConfirm={handleLogout}
+        />
       </div>
     </header>
   );
